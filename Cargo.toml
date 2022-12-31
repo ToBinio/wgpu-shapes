@@ -1,0 +1,13 @@
+[package]
+name = "wgpu-shapes"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wgpu = "0.14.2"
+bytemuck = { version = "1.4", features = [ "derive" ] }
+
+[dev-dependencies]
+wgpu-noboiler = "0.1.3"
