@@ -1,7 +1,9 @@
 use std::iter::once;
+
 use wgpu::{CommandEncoder, RenderPipeline, TextureView};
 use wgpu_noboiler::app::{AppCreator, AppData};
 use wgpu_noboiler::render_pass::RenderPassCreator;
+
 use wgpu_shapes::shape_renderer::ShapeRenderer;
 
 struct State {
@@ -23,12 +25,13 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
     shape_renderer.clear();
 
     shape_renderer.rect()
-        .width(0.2)
-        .color((0.0, 0.0, 1.0, 1.0));
-
+        .pos((0.0, 0.5))
+        .color((0.0, 1.0, 1.0, 1.0));
     shape_renderer.rect()
-        .pos((0.2, 0.4))
-        .color((0.0, 1.0, 0.5, 1.0));
+        .pos((0.2, -0.2))
+        .width(0.5)
+        .color((0.0, 1.0, 0.0, 1.0));
+
 
     shape_renderer.render(RenderPassCreator::new(&mut encoder, &texture_view).build(), &data.device);
 

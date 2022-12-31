@@ -1,5 +1,7 @@
 use wgpu::{Buffer, Device, include_wgsl, RenderPass, RenderPipeline, SurfaceConfiguration};
 use wgpu::util::DeviceExt;
+
+use crate::instance::Instance;
 use crate::rect::Rect;
 use crate::vertex::Vertex;
 
@@ -27,7 +29,8 @@ impl ShapeRenderer {
                 module: &shader,
                 entry_point: "vs_main",
                 buffers: &[
-                    Vertex::desc()
+                    Vertex::desc(),
+                    Instance::desc()
                 ],
             },
             fragment: Some(wgpu::FragmentState {
@@ -65,7 +68,7 @@ impl ShapeRenderer {
     }
 
     pub fn render<'a, 'b : 'a>(&'b self, render_pass: RenderPass<'a>, device: &Device) {
-        let (vertex_buffer, (indices_buffer, indices_count)) = self.generate_rect_buffer(device);
+        let (vertex_buffer, (indices_buffer, indices_count), (instance, instance_count)) = self.generate_rect_buffer(device);
 
         let mut render_pass = render_pass;
 
@@ -74,7 +77,9 @@ impl ShapeRenderer {
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(indices_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
-        render_pass.draw_indexed(0..indices_count, 0, 0..1);
+        render_pass.set_vertex_buffer(1, instance.slice(..));
+
+        render_pass.draw_indexed(0..indices_count, 0, 0..instance_count);
     }
 
     pub fn clear(&mut self) {
@@ -86,22 +91,29 @@ impl ShapeRenderer {
         self.recs.last_mut().unwrap()
     }
 
-    fn generate_rect_buffer(&self, device: &Device) -> (Buffer, (Buffer, u32)) {
-        let mut vertices: Vec<Vertex> = vec![];
-        let mut indices: Vec<u32> = vec![];
+    fn generate_rect_buffer(&self, device: &Device) -> (Buffer, (Buffer, u32), (Buffer, u32)) {
+        let mut vertices: Vec<_> = vec![];
+        vertices.push(Vertex { position: [1.0, 1.0] });
+        vertices.push(Vertex { position: [-1.0, 1.0] });
+        vertices.push(Vertex { position: [-1.0, -1.0] });
+        vertices.push(Vertex { position: [1.0, -1.0] });
 
-        for (index, rect) in self.recs.iter().enumerate() {
-            vertices.push(Vertex { position: [rect.pos.0 + rect.width, rect.pos.1 + rect.height, 0.0], color: [rect.color.0, rect.color.1, rect.color.2] });
-            vertices.push(Vertex { position: [rect.pos.0 - rect.width, rect.pos.1 + rect.height, 0.0], color: [rect.color.0, rect.color.1, rect.color.2] });
-            vertices.push(Vertex { position: [rect.pos.0 - rect.width, rect.pos.1 - rect.height, 0.0], color: [rect.color.0, rect.color.1, rect.color.2] });
-            vertices.push(Vertex { position: [rect.pos.0 + rect.width, rect.pos.1 - rect.height, 0.0], color: [rect.color.0, rect.color.1, rect.color.2] });
+        let mut indices: Vec<_> = vec![];
+        indices.push(0);
+        indices.push(1);
+        indices.push(2);
+        indices.push(0);
+        indices.push(2);
+        indices.push(3);
 
-            indices.push(index as u32 * 4);
-            indices.push(index as u32 * 4 + 1);
-            indices.push(index as u32 * 4 + 2);
-            indices.push(index as u32 * 4);
-            indices.push(index as u32 * 4 + 2);
-            indices.push(index as u32 * 4 + 3);
+        let mut instances: Vec<_> = vec![];
+
+        for rect in &self.recs {
+            instances.push(Instance {
+                position: [rect.pos.0, rect.pos.1],
+                scale: [rect.width, rect.height],
+                color: [rect.color.0, rect.color.1, rect.color.2],
+            })
         }
 
         let vertex_buffer = device.create_buffer_init(
@@ -120,6 +132,14 @@ impl ShapeRenderer {
             }
         );
 
-        (vertex_buffer, (index_buffer, indices.len() as u32))
+        let instance_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(&instances),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        );
+
+        (vertex_buffer, (index_buffer, indices.len() as u32), (instance_buffer, instances.len() as u32))
     }
 }
