@@ -1,5 +1,8 @@
 // Vertex shader
 
+@group(0) @binding(0)
+var<uniform> frameSize : vec2<f32>;
+
 struct VertexInput {
     @location(0) position: vec2<f32>,
 };
@@ -24,10 +27,10 @@ fn vs_main(
     out.color = instace.color;
 
     var xPos: f32;
-    xPos = (model.position.x * instace.scale.x) + instace.position.x;
+    xPos = ((model.position.x * instace.scale.x) + instace.position.x) / frameSize.x;
 
     var yPos: f32;
-    yPos = (model.position.y * instace.scale.y) + instace.position.y;
+    yPos = ((model.position.y * instace.scale.y) + instace.position.y) / frameSize.y;
 
     out.clip_position = vec4<f32>(xPos,yPos,0.0, 1.0);
     return out;

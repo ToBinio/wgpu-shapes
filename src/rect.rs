@@ -31,8 +31,8 @@ impl Rect {
 impl Default for Rect {
     fn default() -> Self {
         Rect {
-            width: 0.2,
-            height: 0.2,
+            width: 20.0,
+            height: 20.0,
             pos: (0.0, 0.0),
             color: (1.0, 1.0, 1.0, 1.0),
         }

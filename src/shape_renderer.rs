@@ -1,4 +1,4 @@
-use wgpu::{Buffer, Device, include_wgsl, RenderPass, RenderPipeline, SurfaceConfiguration};
+use wgpu::{BindGroupLayout, Buffer, Device, include_wgsl, RenderPass, RenderPipeline, SurfaceConfiguration};
 use wgpu::util::DeviceExt;
 
 use crate::instance::Instance;
@@ -9,16 +9,37 @@ pub struct ShapeRenderer {
     render_pipeline: RenderPipeline,
 
     recs: Vec<Rect>,
+
+    frame_size_group_layout: BindGroupLayout,
+    frame_size: (f32, f32),
 }
 
 impl ShapeRenderer {
     pub fn new(device: &Device, config: &SurfaceConfiguration) -> ShapeRenderer {
         let shader = device.create_shader_module(include_wgsl!("../resources/shader.wgsl"));
 
+        let frame_size_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }
+            ],
+            label: Some("FrameSize Bind group"),
+        });
+
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[],
+                bind_group_layouts: &[
+                    &frame_size_group_layout
+                ],
                 push_constant_ranges: &[],
             });
 
@@ -60,19 +81,40 @@ impl ShapeRenderer {
             multiview: None,
         });
 
-
         ShapeRenderer {
             render_pipeline,
             recs: vec![],
+            frame_size_group_layout,
+            frame_size: (800.0, 600.0),
         }
     }
 
     pub fn render<'a, 'b : 'a>(&'b self, render_pass: RenderPass<'a>, device: &Device) {
         let (vertex_buffer, (indices_buffer, indices_count), (instance, instance_count)) = self.generate_rect_buffer(device);
 
+        let frame_size_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Camera Buffer"),
+                contents: bytemuck::cast_slice(&[self.frame_size.0, self.frame_size.1]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            }
+        );
+
+        let frame_size_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &self.frame_size_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: frame_size_buffer.as_entire_binding(),
+                }
+            ],
+            label: Some("frame_size_bind_group"),
+        });
+
         let mut render_pass = render_pass;
 
         render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.set_bind_group(0, &frame_size_bind_group, &[]);
 
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(indices_buffer.slice(..), wgpu::IndexFormat::Uint32);
@@ -84,6 +126,11 @@ impl ShapeRenderer {
 
     pub fn clear(&mut self) {
         self.recs.clear();
+    }
+
+    pub fn frame_size(&mut self, frame_size: (f32, f32)) -> &mut Self {
+        self.frame_size = frame_size;
+        self
     }
 
     pub fn rect(&mut self) -> &mut Rect {
