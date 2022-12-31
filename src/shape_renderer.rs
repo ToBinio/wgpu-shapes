@@ -92,19 +92,14 @@ impl ShapeRenderer {
     }
 
     fn generate_rect_buffer(&self, device: &Device) -> (Buffer, (Buffer, u32), (Buffer, u32)) {
-        let mut vertices: Vec<_> = vec![];
-        vertices.push(Vertex { position: [1.0, 1.0] });
-        vertices.push(Vertex { position: [-1.0, 1.0] });
-        vertices.push(Vertex { position: [-1.0, -1.0] });
-        vertices.push(Vertex { position: [1.0, -1.0] });
+        let vertices: Vec<_> = vec![
+            Vertex { position: [1.0, 1.0] },
+            Vertex { position: [-1.0, 1.0] },
+            Vertex { position: [-1.0, -1.0] },
+            Vertex { position: [1.0, -1.0] },
+        ];
 
-        let mut indices: Vec<_> = vec![];
-        indices.push(0);
-        indices.push(1);
-        indices.push(2);
-        indices.push(0);
-        indices.push(2);
-        indices.push(3);
+        let indices: Vec<_> = vec![0, 1, 2, 0, 2, 3];
 
         let mut instances: Vec<_> = vec![];
 
