@@ -3,6 +3,9 @@
 @group(0) @binding(0)
 var<uniform> frameSize : vec2<f32>;
 
+@group(0) @binding(1)
+var<uniform> frameOffset : vec2<f32>;
+
 struct VertexInput {
     @location(0) position: vec2<f32>,
 };
@@ -30,11 +33,11 @@ fn vs_main(
     var xScale = instace.scale.x / 2.0;
     var yScale = instace.scale.y / 2.0;
 
-    var xPos: f32;
-    xPos = ((model.position.x * cos(instace.rotation) * xScale - model.position.y * sin(instace.rotation) * yScale) + instace.position.x) / frameSize.x * 2.0;
+    var xLocation = model.position.x * xScale;
+    var yLocation = model.position.y * yScale;
 
-    var yPos: f32;
-    yPos = ((model.position.x * sin(instace.rotation) * xScale + model.position.y * cos(instace.rotation) * yScale) + instace.position.y) / frameSize.y * 2.0;
+    var xPos = ((xLocation * cos(instace.rotation) - yLocation * sin(instace.rotation)) + instace.position.x - frameOffset.x) / frameSize.x * 2.0;
+    var yPos = ((xLocation * sin(instace.rotation) + yLocation * cos(instace.rotation)) + instace.position.y - frameOffset.y) / frameSize.y * 2.0;
 
     out.clip_position = vec4<f32>(xPos,yPos,0.0, 1.0);
     return out;

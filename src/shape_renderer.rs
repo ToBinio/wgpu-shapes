@@ -10,8 +10,9 @@ pub struct ShapeRenderer {
 
     recs: Vec<Rect>,
 
-    frame_size_group_layout: BindGroupLayout,
+    frame_group_layout: BindGroupLayout,
     frame_size: (f32, f32),
+    frame_offset: (f32, f32),
 }
 
 impl ShapeRenderer {
@@ -29,9 +30,19 @@ impl ShapeRenderer {
                         min_binding_size: None,
                     },
                     count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
                 }
             ],
-            label: Some("FrameSize Bind group"),
+            label: Some("Frame Bind group"),
         });
 
         let render_pipeline_layout =
@@ -84,8 +95,9 @@ impl ShapeRenderer {
         ShapeRenderer {
             render_pipeline,
             recs: vec![],
-            frame_size_group_layout,
+            frame_group_layout: frame_size_group_layout,
             frame_size: (800.0, 600.0),
+            frame_offset: (0.0,0.0)
         }
     }
 
@@ -94,18 +106,30 @@ impl ShapeRenderer {
 
         let frame_size_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
-                label: Some("Camera Buffer"),
+                label: Some("Frame size Buffer"),
                 contents: bytemuck::cast_slice(&[self.frame_size.0, self.frame_size.1]),
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }
         );
 
-        let frame_size_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &self.frame_size_group_layout,
+        let frame_offset_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Frame offset Buffer"),
+                contents: bytemuck::cast_slice(&[self.frame_offset.0, self.frame_offset.1]),
+                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            }
+        );
+
+        let frame_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &self.frame_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
                     resource: frame_size_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: frame_offset_buffer.as_entire_binding(),
                 }
             ],
             label: Some("frame_size_bind_group"),
@@ -114,7 +138,7 @@ impl ShapeRenderer {
         let mut render_pass = render_pass;
 
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(0, &frame_size_bind_group, &[]);
+        render_pass.set_bind_group(0, &frame_bind_group, &[]);
 
         render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
         render_pass.set_index_buffer(indices_buffer.slice(..), wgpu::IndexFormat::Uint32);
@@ -130,6 +154,11 @@ impl ShapeRenderer {
 
     pub fn update_frame_size(&mut self, frame_size: (f32, f32)) -> &mut Self {
         self.frame_size = frame_size;
+        self
+    }
+
+    pub fn update_frame_offset(&mut self, frame_offset: (f32, f32)) -> &mut Self {
+        self.frame_offset = frame_offset;
         self
     }
 

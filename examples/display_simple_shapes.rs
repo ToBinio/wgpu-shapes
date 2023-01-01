@@ -27,6 +27,7 @@ fn main() {
 
 fn update(data: &AppData, state: &mut State) {
     state.rotation += 0.5 * data.delta_time as f32;
+    // state.shape_renderer.as_mut().unwrap().update_frame_offset((state.rotation.sin() * 100.0, state.rotation.cos() * 100.0));
 }
 
 fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, texture_view: TextureView) {
@@ -34,8 +35,8 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
     shape_renderer.clear();
 
-    for x in -10..10 {
-        for y in -10..10 {
+    for x in -10..=10 {
+        for y in -10..=10 {
             shape_renderer.rect()
                 .width(20.0)
                 .height(20.0)
@@ -52,6 +53,7 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
 fn init(data: &AppData, state: &mut State, _: &mut Vec<RenderPipeline>) {
     state.shape_renderer = Some(ShapeRenderer::new(&data.device, &data.config));
+    state.shape_renderer.as_mut().unwrap().update_frame_offset((100.0, 0.0));
 }
 
 fn resize(_data: &AppData, state: &mut State, size: &PhysicalSize<u32>) {
