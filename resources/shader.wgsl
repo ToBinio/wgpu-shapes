@@ -10,7 +10,8 @@ struct VertexInput {
 struct InstanceInput{
     @location(1) position: vec2<f32>,
     @location(2) scale: vec2<f32>,
-    @location(3) color: vec3<f32>,
+    @location(3) rotation: f32,
+    @location(4) color: vec3<f32>,
 }
 
 struct VertexOutput {
@@ -27,10 +28,10 @@ fn vs_main(
     out.color = instace.color;
 
     var xPos: f32;
-    xPos = ((model.position.x * instace.scale.x) + instace.position.x) / frameSize.x;
+    xPos = ((model.position.x * cos(instace.rotation) * instace.scale.x - model.position.y * sin(instace.rotation) * instace.scale.y) + instace.position.x) / frameSize.x;
 
     var yPos: f32;
-    yPos = ((model.position.y * instace.scale.y) + instace.position.y) / frameSize.y;
+    yPos = ((model.position.x * sin(instace.rotation) * instace.scale.x + model.position.y * cos(instace.rotation) * instace.scale.y) + instace.position.y) / frameSize.y;
 
     out.clip_position = vec4<f32>(xPos,yPos,0.0, 1.0);
     return out;

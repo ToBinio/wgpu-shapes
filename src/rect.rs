@@ -3,6 +3,7 @@ pub struct Rect {
     pub height: f32,
     //todo rename to location
     pub pos: (f32, f32),
+    pub rotation: f32,
     pub color: (f32, f32, f32, f32),
 }
 
@@ -22,6 +23,11 @@ impl Rect {
         self
     }
 
+    pub fn rotation(&mut self, rotation: f32) -> &mut Self {
+        self.rotation = rotation;
+        self
+    }
+
     pub fn pos(&mut self, pos: (f32, f32)) -> &mut Self {
         self.pos = pos;
         self
@@ -34,6 +40,7 @@ impl Default for Rect {
             width: 20.0,
             height: 20.0,
             pos: (0.0, 0.0),
+            rotation: 0.0,
             color: (1.0, 1.0, 1.0, 1.0),
         }
     }

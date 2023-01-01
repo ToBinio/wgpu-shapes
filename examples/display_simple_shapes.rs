@@ -1,6 +1,6 @@
 use std::iter::once;
 
-use wgpu::{CommandEncoder, RenderPipeline, TextureView};
+use wgpu::{CommandEncoder, PresentMode, RenderPipeline, TextureView};
 use wgpu_noboiler::app::{AppCreator, AppData};
 use wgpu_noboiler::render_pass::RenderPassCreator;
 use winit::dpi::PhysicalSize;
@@ -9,16 +9,24 @@ use wgpu_shapes::shape_renderer::ShapeRenderer;
 
 struct State {
     shape_renderer: Option<ShapeRenderer>,
+    rotation: f32,
 }
 
 fn main() {
     AppCreator::new(State {
-        shape_renderer: None
+        shape_renderer: None,
+        rotation: 0.0,
     })
         .render(render)
         .init(init)
+        .update(update)
         .resize(resize)
+        .present_mode(PresentMode::Immediate)
         .run();
+}
+
+fn update(data: &AppData, state: &mut State) {
+    state.rotation += 0.5 * data.delta_time as f32;
 }
 
 fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, texture_view: TextureView) {
@@ -26,19 +34,16 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
     shape_renderer.clear();
 
-    shape_renderer.rect()
-        .color((0.0, 1.0, 1.0, 1.0));
-
-    shape_renderer.rect()
-        .pos((0.0, 50.0))
-        .width(100.0)
-        .color((0.0, 1.0, 0.0, 1.0));
-
-    shape_renderer.rect()
-        .pos((0.0, -50.0))
-        .width(100.0)
-        .color((0.0, 1.0, 0.0, 1.0));
-
+    for x in -10..10 {
+        for y in -10..10 {
+            shape_renderer.rect()
+                .width(10.0)
+                .height(10.0)
+                .pos((x as f32 * 25.0, y as f32 * 25.0))
+                .color((0.0, 1.0, 1.0, 1.0))
+                .rotation(state.rotation);
+        }
+    }
 
     shape_renderer.render(RenderPassCreator::new(&mut encoder, &texture_view).build(), &data.device);
 

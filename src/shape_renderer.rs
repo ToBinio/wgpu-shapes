@@ -148,15 +148,14 @@ impl ShapeRenderer {
 
         let indices: Vec<_> = vec![0, 1, 2, 0, 2, 3];
 
-        let mut instances: Vec<_> = vec![];
-
-        for rect in &self.recs {
-            instances.push(Instance {
+        let instances: Vec<_> = self.recs.iter()
+            .map(|rect| Instance {
                 position: [rect.pos.0, rect.pos.1],
                 scale: [rect.width, rect.height],
+                rotation: rect.rotation,
                 color: [rect.color.0, rect.color.1, rect.color.2],
             })
-        }
+            .collect();
 
         let vertex_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
