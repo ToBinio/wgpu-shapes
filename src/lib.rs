@@ -1,4 +1,5 @@
 pub mod rect;
 pub mod shape_renderer;
-pub mod vertex;
-pub mod instance;
+mod vertex;
+mod instance;
+pub mod oval;

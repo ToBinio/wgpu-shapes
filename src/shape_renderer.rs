@@ -1,7 +1,10 @@
+use std::f32::consts::PI;
+
 use wgpu::{BindGroupLayout, Buffer, Device, include_wgsl, RenderPass, RenderPipeline, SurfaceConfiguration};
 use wgpu::util::DeviceExt;
 
 use crate::instance::Instance;
+use crate::oval::Oval;
 use crate::rect::Rect;
 use crate::vertex::Vertex;
 
@@ -9,6 +12,7 @@ pub struct ShapeRenderer {
     render_pipeline: RenderPipeline,
 
     recs: Vec<Rect>,
+    ovals: Vec<Oval>,
 
     frame_group_layout: BindGroupLayout,
     frame_size: (f32, f32),
@@ -94,16 +98,17 @@ impl ShapeRenderer {
 
         ShapeRenderer {
             render_pipeline,
+
             recs: vec![],
+            ovals: vec![],
+
             frame_group_layout: frame_size_group_layout,
             frame_size: (800.0, 600.0),
-            frame_offset: (0.0,0.0)
+            frame_offset: (0.0, 0.0),
         }
     }
 
     pub fn render<'a, 'b : 'a>(&'b self, render_pass: RenderPass<'a>, device: &Device) {
-        let (vertex_buffer, (indices_buffer, indices_count), (instance, instance_count)) = self.generate_rect_buffer(device);
-
         let frame_size_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Frame size Buffer"),
@@ -135,17 +140,29 @@ impl ShapeRenderer {
             label: Some("frame_size_bind_group"),
         });
 
+        let (rect_vertex_buffer, (rect_indices_buffer, rect_indices_count), (rect_instance, rect_instance_count)) = self.generate_rect_buffer(device);
+        let (oval_vertex_buffer, (oval_indices_buffer, oval_indices_count), (oval_instance, oval_instance_count)) = self.generate_oval_buffer(device);
+
         let mut render_pass = render_pass;
 
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &frame_bind_group, &[]);
 
-        render_pass.set_vertex_buffer(0, vertex_buffer.slice(..));
-        render_pass.set_index_buffer(indices_buffer.slice(..), wgpu::IndexFormat::Uint32);
+        //rects
+        render_pass.set_vertex_buffer(0, rect_vertex_buffer.slice(..));
+        render_pass.set_index_buffer(rect_indices_buffer.slice(..), wgpu::IndexFormat::Uint32);
 
-        render_pass.set_vertex_buffer(1, instance.slice(..));
+        render_pass.set_vertex_buffer(1, rect_instance.slice(..));
 
-        render_pass.draw_indexed(0..indices_count, 0, 0..instance_count);
+        render_pass.draw_indexed(0..rect_indices_count, 0, 0..rect_instance_count);
+
+        //ovals
+        render_pass.set_vertex_buffer(0, oval_vertex_buffer.slice(..));
+        render_pass.set_index_buffer(oval_indices_buffer.slice(..), wgpu::IndexFormat::Uint32);
+
+        render_pass.set_vertex_buffer(1, oval_instance.slice(..));
+
+        render_pass.draw_indexed(0..oval_indices_count, 0, 0..oval_instance_count);
     }
 
     pub fn clear(&mut self) {
@@ -183,6 +200,66 @@ impl ShapeRenderer {
                 scale: [rect.width, rect.height],
                 rotation: rect.rotation,
                 color: [rect.color.0, rect.color.1, rect.color.2],
+            })
+            .collect();
+
+        let vertex_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(&vertices),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        );
+
+        let index_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(&indices),
+                usage: wgpu::BufferUsages::INDEX,
+            }
+        );
+
+        let instance_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(&instances),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        );
+
+        (vertex_buffer, (index_buffer, indices.len() as u32), (instance_buffer, instances.len() as u32))
+    }
+
+    pub fn oval(&mut self) -> &mut Oval{
+        self.ovals.push(Oval::default());
+        self.ovals.last_mut().unwrap()
+    }
+
+    fn generate_oval_buffer(&self, device: &Device) -> (Buffer, (Buffer, u32), (Buffer, u32)) {
+        let mut vertices: Vec<_> = vec![];
+
+        for i in 0..16 {
+            let angle = PI * 2.0 / 16.0 * i as f32;
+
+            vertices.push(Vertex {
+                position: [angle.cos(), angle.sin()],
+            })
+        }
+
+        let mut indices: Vec<_> = vec![];
+
+        for i in 0..(16 - 2) {
+            indices.push(0);
+            indices.push(i + 1);
+            indices.push(i + 2);
+        }
+
+        let instances: Vec<_> = self.ovals.iter()
+            .map(|oval| Instance {
+                position: [oval.pos.0, oval.pos.1],
+                scale: [oval.width, oval.height],
+                rotation: 0.0,
+                color: [oval.color.0, oval.color.1, oval.color.2],
             })
             .collect();
 

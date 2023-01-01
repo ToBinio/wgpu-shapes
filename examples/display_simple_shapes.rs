@@ -27,7 +27,7 @@ fn main() {
 
 fn update(data: &AppData, state: &mut State) {
     state.rotation += 0.5 * data.delta_time as f32;
-    // state.shape_renderer.as_mut().unwrap().update_frame_offset((state.rotation.sin() * 100.0, state.rotation.cos() * 100.0));
+    state.shape_renderer.as_mut().unwrap().update_frame_offset((state.rotation.cos() * 20.0, 0.0));
 }
 
 fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, texture_view: TextureView) {
@@ -37,12 +37,20 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
     for x in -10..=10 {
         for y in -10..=10 {
-            shape_renderer.rect()
-                .width(20.0)
-                .height(20.0)
-                .pos((x as f32 * 25.0, y as f32 * 25.0))
-                .color((0.0, 1.0, 1.0, 1.0))
-                .rotation(state.rotation);
+            if x % 2 == 0 || y % 2 == 0 {
+                shape_renderer.rect()
+                    .width(20.0)
+                    .height(20.0)
+                    .pos((x as f32 * 25.0, y as f32 * 25.0))
+                    .color(((x + 10) as f32 / 20.0, (y + 10) as f32 / 20.0, 0.0, 1.0))
+                    .rotation(state.rotation);
+            } else {
+                shape_renderer.oval()
+                    .width(10.0)
+                    .height(20.0)
+                    .pos((x as f32 * 25.0, y as f32 * 25.0))
+                    .color((0.0, 0.0, 0.0, 1.0));
+            }
         }
     }
 
@@ -53,7 +61,6 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
 fn init(data: &AppData, state: &mut State, _: &mut Vec<RenderPipeline>) {
     state.shape_renderer = Some(ShapeRenderer::new(&data.device, &data.config));
-    state.shape_renderer.as_mut().unwrap().update_frame_offset((100.0, 0.0));
 }
 
 fn resize(_data: &AppData, state: &mut State, size: &PhysicalSize<u32>) {
