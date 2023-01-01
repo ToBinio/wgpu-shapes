@@ -1,7 +1,8 @@
 use std::f32::consts::PI;
 
-use wgpu::{BindGroupLayout, Buffer, Device, include_wgsl, RenderPass, RenderPipeline, SurfaceConfiguration};
+use wgpu::{BindGroupLayout, Device, include_wgsl, RenderPass, RenderPipeline, SurfaceConfiguration};
 use wgpu::util::DeviceExt;
+use wgpu_noboiler::buffer::{BufferCreator, SimpleBuffer};
 
 use crate::instance::Instance;
 use crate::oval::Oval;
@@ -140,8 +141,8 @@ impl ShapeRenderer {
             label: Some("frame_size_bind_group"),
         });
 
-        let (rect_vertex_buffer, (rect_indices_buffer, rect_indices_count), (rect_instance, rect_instance_count)) = self.generate_rect_buffer(device);
-        let (oval_vertex_buffer, (oval_indices_buffer, oval_indices_count), (oval_instance, oval_instance_count)) = self.generate_oval_buffer(device);
+        let (rect_vertex_buffer, rect_indices_buffer, rect_instance_buffer) = self.generate_rect_buffer(device);
+        let (oval_vertex_buffer, oval_indices_buffer, oval_instance_buffer) = self.generate_oval_buffer(device);
 
         let mut render_pass = render_pass;
 
@@ -149,20 +150,20 @@ impl ShapeRenderer {
         render_pass.set_bind_group(0, &frame_bind_group, &[]);
 
         //rects
-        render_pass.set_vertex_buffer(0, rect_vertex_buffer.slice(..));
-        render_pass.set_index_buffer(rect_indices_buffer.slice(..), wgpu::IndexFormat::Uint32);
+        render_pass.set_vertex_buffer(0, rect_vertex_buffer.slice());
+        render_pass.set_index_buffer(rect_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
 
-        render_pass.set_vertex_buffer(1, rect_instance.slice(..));
+        render_pass.set_vertex_buffer(1, rect_instance_buffer.slice());
 
-        render_pass.draw_indexed(0..rect_indices_count, 0, 0..rect_instance_count);
+        render_pass.draw_indexed(0..rect_indices_buffer.size(), 0, 0..rect_instance_buffer.size());
 
         //ovals
-        render_pass.set_vertex_buffer(0, oval_vertex_buffer.slice(..));
-        render_pass.set_index_buffer(oval_indices_buffer.slice(..), wgpu::IndexFormat::Uint32);
+        render_pass.set_vertex_buffer(0, oval_vertex_buffer.slice());
+        render_pass.set_index_buffer(oval_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
 
-        render_pass.set_vertex_buffer(1, oval_instance.slice(..));
+        render_pass.set_vertex_buffer(1, oval_instance_buffer.slice());
 
-        render_pass.draw_indexed(0..oval_indices_count, 0, 0..oval_instance_count);
+        render_pass.draw_indexed(0..oval_indices_buffer.size(), 0, 0..oval_instance_buffer.size());
     }
 
     pub fn clear(&mut self) {
@@ -184,15 +185,20 @@ impl ShapeRenderer {
         self.recs.last_mut().unwrap()
     }
 
-    fn generate_rect_buffer(&self, device: &Device) -> (Buffer, (Buffer, u32), (Buffer, u32)) {
-        let vertices: Vec<_> = vec![
-            Vertex { position: [1.0, 1.0] },
-            Vertex { position: [-1.0, 1.0] },
-            Vertex { position: [-1.0, -1.0] },
-            Vertex { position: [1.0, -1.0] },
-        ];
+    fn generate_rect_buffer(&self, device: &Device) -> (SimpleBuffer, SimpleBuffer, SimpleBuffer) {
+        let vertex_buffer = BufferCreator::vertex(device)
+            .label("Rect VertexBuffer")
+            .data(vec![
+                Vertex { position: [1.0, 1.0] },
+                Vertex { position: [-1.0, 1.0] },
+                Vertex { position: [-1.0, -1.0] },
+                Vertex { position: [1.0, -1.0] },
+            ]).build();
 
-        let indices: Vec<_> = vec![0, 1, 2, 0, 2, 3];
+        let indices_buffer = BufferCreator::indices(device)
+            .label("Rect IndicesBuffer")
+            .data(vec![0, 1, 2, 0, 2, 3])
+            .build();
 
         let instances: Vec<_> = self.recs.iter()
             .map(|rect| Instance {
@@ -203,56 +209,40 @@ impl ShapeRenderer {
             })
             .collect();
 
-        let vertex_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
+        let instances_buffer = BufferCreator::vertex(device)
+            .label("Rect InstanceBuffer")
+            .data(instances)
+            .build();
 
-        let index_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(&indices),
-                usage: wgpu::BufferUsages::INDEX,
-            }
-        );
-
-        let instance_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&instances),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
-
-        (vertex_buffer, (index_buffer, indices.len() as u32), (instance_buffer, instances.len() as u32))
+        (vertex_buffer, indices_buffer, instances_buffer)
     }
 
-    pub fn oval(&mut self) -> &mut Oval{
+    pub fn oval(&mut self) -> &mut Oval {
         self.ovals.push(Oval::default());
         self.ovals.last_mut().unwrap()
     }
 
-    fn generate_oval_buffer(&self, device: &Device) -> (Buffer, (Buffer, u32), (Buffer, u32)) {
-        let mut vertices: Vec<_> = vec![];
+    fn generate_oval_buffer(&self, device: &Device) -> (SimpleBuffer, SimpleBuffer, SimpleBuffer) {
+        let vertices: Vec<_> = (0..16)
+            .map(|i| {
+                let angle = PI * 2.0 / 16.0 * i as f32;
 
-        for i in 0..16 {
-            let angle = PI * 2.0 / 16.0 * i as f32;
-
-            vertices.push(Vertex {
-                position: [angle.cos(), angle.sin()],
+                Vertex { position: [angle.cos(), angle.sin()] }
             })
-        }
+            .collect();
 
-        let mut indices: Vec<_> = vec![];
+        let vertex_buffer = BufferCreator::vertex(device)
+            .label("Rect VertexBuffer")
+            .data(vertices).build();
 
-        for i in 0..(16 - 2) {
-            indices.push(0);
-            indices.push(i + 1);
-            indices.push(i + 2);
-        }
+        let indices: Vec<_> = (0..(16 - 2))
+            .flat_map(|i| [0, i + 1, i + 2])
+            .collect();
+
+        let indices_buffer = BufferCreator::indices(device)
+            .label("Rect IndicesBuffer")
+            .data(indices)
+            .build();
 
         let instances: Vec<_> = self.ovals.iter()
             .map(|oval| Instance {
@@ -263,30 +253,11 @@ impl ShapeRenderer {
             })
             .collect();
 
-        let vertex_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(&vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
+        let instances_buffer = BufferCreator::vertex(device)
+            .label("Rect InstanceBuffer")
+            .data(instances)
+            .build();
 
-        let index_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(&indices),
-                usage: wgpu::BufferUsages::INDEX,
-            }
-        );
-
-        let instance_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&instances),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
-
-        (vertex_buffer, (index_buffer, indices.len() as u32), (instance_buffer, instances.len() as u32))
+        (vertex_buffer, indices_buffer, instances_buffer)
     }
 }

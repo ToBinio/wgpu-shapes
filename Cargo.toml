@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 wgpu = "0.14.2"
 bytemuck = { version = "1.4", features = [ "derive" ] }
+wgpu-noboiler = "0.1.3"
 
 [dev-dependencies]
-wgpu-noboiler = "0.1.3"
 winit = "0.27.5"
