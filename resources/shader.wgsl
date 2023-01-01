@@ -27,11 +27,14 @@ fn vs_main(
     var out: VertexOutput;
     out.color = instace.color;
 
+    var xScale = instace.scale.x / 2.0;
+    var yScale = instace.scale.y / 2.0;
+
     var xPos: f32;
-    xPos = ((model.position.x * cos(instace.rotation) * instace.scale.x - model.position.y * sin(instace.rotation) * instace.scale.y) + instace.position.x) / frameSize.x;
+    xPos = ((model.position.x * cos(instace.rotation) * xScale - model.position.y * sin(instace.rotation) * yScale) + instace.position.x) / frameSize.x * 2.0;
 
     var yPos: f32;
-    yPos = ((model.position.x * sin(instace.rotation) * instace.scale.x + model.position.y * cos(instace.rotation) * instace.scale.y) + instace.position.y) / frameSize.y;
+    yPos = ((model.position.x * sin(instace.rotation) * xScale + model.position.y * cos(instace.rotation) * yScale) + instace.position.y) / frameSize.y * 2.0;
 
     out.clip_position = vec4<f32>(xPos,yPos,0.0, 1.0);
     return out;

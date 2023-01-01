@@ -128,7 +128,7 @@ impl ShapeRenderer {
         self.recs.clear();
     }
 
-    pub fn frame_size(&mut self, frame_size: (f32, f32)) -> &mut Self {
+    pub fn update_frame_size(&mut self, frame_size: (f32, f32)) -> &mut Self {
         self.frame_size = frame_size;
         self
     }
