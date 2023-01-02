@@ -27,7 +27,9 @@ fn main() {
 
 fn update(data: &AppData, state: &mut State) {
     state.rotation += 0.5 * data.delta_time as f32;
-    state.shape_renderer.as_mut().unwrap().update_frame_offset((state.rotation.cos() * 20.0, 0.0));
+    state.shape_renderer.as_mut().unwrap().update_frame_offset((state.rotation.cos() * 50.0, 0.0));
+
+    println!("{}", data.fps);
 }
 
 fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, texture_view: TextureView) {
@@ -35,9 +37,9 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
     shape_renderer.clear();
 
-    for x in -10..=10 {
-        for y in -10..=10 {
-            if x % 2 == 0 || y % 2 == 0 {
+    for x in -200..=200 {
+        for y in -200..=200 {
+            if x % 2 == 0 && y % 2 == 0 {
                 shape_renderer.rect()
                     .width(20.0)
                     .height(20.0)
@@ -46,10 +48,11 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
                     .rotation(state.rotation);
             } else {
                 shape_renderer.oval()
-                    .width(10.0)
+                    .width(20.0)
                     .height(20.0)
                     .pos((x as f32 * 25.0, y as f32 * 25.0))
-                    .color((0.0, 0.0, 0.0, 1.0));
+                    .color((0.0, 0.0, 0.0, 1.0))
+                    .detail(16);
             }
         }
     }

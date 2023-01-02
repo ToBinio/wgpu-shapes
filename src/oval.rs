@@ -1,9 +1,10 @@
-pub struct Oval{
+pub struct Oval {
     pub width: f32,
     pub height: f32,
     //todo rename to location
     pub pos: (f32, f32),
     pub color: (f32, f32, f32, f32),
+    pub detail: u32,
 }
 
 impl Oval {
@@ -26,6 +27,11 @@ impl Oval {
         self.pos = pos;
         self
     }
+
+    pub fn detail(&mut self, detail: u32) -> &mut Self {
+        self.detail = detail;
+        self
+    }
 }
 
 impl Default for Oval {
@@ -35,6 +41,7 @@ impl Default for Oval {
             height: 20.0,
             pos: (0.0, 0.0),
             color: (0.0, 0.0, 1.0, 1.0),
+            detail: 16,
         }
     }
 }

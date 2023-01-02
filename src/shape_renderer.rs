@@ -1,4 +1,7 @@
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 use std::f32::consts::PI;
+use std::time::Instant;
 
 use wgpu::{BindGroupLayout, Device, include_wgsl, RenderPass, RenderPipeline, SurfaceConfiguration};
 use wgpu::util::DeviceExt;
@@ -141,8 +144,8 @@ impl ShapeRenderer {
             label: Some("frame_size_bind_group"),
         });
 
-        let (rect_vertex_buffer, rect_indices_buffer, rect_instance_buffer) = self.generate_rect_buffer(device);
-        let (oval_vertex_buffer, oval_indices_buffer, oval_instance_buffer) = self.generate_oval_buffer(device);
+        let InstanceBufferGroup(rect_vertex_buffer, rect_indices_buffer, rect_instance_buffer) = self.generate_rect_buffer(device);
+        let oval_buffers = self.generate_oval_buffer(device);
 
         let mut render_pass = render_pass;
 
@@ -158,16 +161,20 @@ impl ShapeRenderer {
         render_pass.draw_indexed(0..rect_indices_buffer.size(), 0, 0..rect_instance_buffer.size());
 
         //ovals
-        render_pass.set_vertex_buffer(0, oval_vertex_buffer.slice());
-        render_pass.set_index_buffer(oval_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
 
-        render_pass.set_vertex_buffer(1, oval_instance_buffer.slice());
+        for InstanceBufferGroup(oval_vertex_buffer, oval_indices_buffer, oval_instance_buffer) in &oval_buffers {
+            render_pass.set_vertex_buffer(0, oval_vertex_buffer.slice());
+            render_pass.set_index_buffer(oval_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
 
-        render_pass.draw_indexed(0..oval_indices_buffer.size(), 0, 0..oval_instance_buffer.size());
+            render_pass.set_vertex_buffer(1, oval_instance_buffer.slice());
+
+            render_pass.draw_indexed(0..oval_indices_buffer.size(), 0, 0..oval_instance_buffer.size());
+        }
     }
 
     pub fn clear(&mut self) {
         self.recs.clear();
+        self.ovals.clear();
     }
 
     pub fn update_frame_size(&mut self, frame_size: (f32, f32)) -> &mut Self {
@@ -185,7 +192,7 @@ impl ShapeRenderer {
         self.recs.last_mut().unwrap()
     }
 
-    fn generate_rect_buffer(&self, device: &Device) -> (SimpleBuffer, SimpleBuffer, SimpleBuffer) {
+    fn generate_rect_buffer(&self, device: &Device) -> InstanceBufferGroup {
         let vertex_buffer = BufferCreator::vertex(device)
             .label("Rect VertexBuffer")
             .data(vec![
@@ -214,7 +221,7 @@ impl ShapeRenderer {
             .data(instances)
             .build();
 
-        (vertex_buffer, indices_buffer, instances_buffer)
+        InstanceBufferGroup(vertex_buffer, indices_buffer, instances_buffer)
     }
 
     pub fn oval(&mut self) -> &mut Oval {
@@ -222,42 +229,61 @@ impl ShapeRenderer {
         self.ovals.last_mut().unwrap()
     }
 
-    fn generate_oval_buffer(&self, device: &Device) -> (SimpleBuffer, SimpleBuffer, SimpleBuffer) {
-        let vertices: Vec<_> = (0..16)
-            .map(|i| {
-                let angle = PI * 2.0 / 16.0 * i as f32;
+    fn generate_oval_buffer(&self, device: &Device) -> Vec<InstanceBufferGroup> {
+        let mut ovals = HashMap::<u32, Vec<&Oval>>::new();
 
-                Vertex { position: [angle.cos(), angle.sin()] }
-            })
-            .collect();
+        for oval in &self.ovals {
+            if let Entry::Vacant(e) = ovals.entry(oval.detail) {
+                e.insert(vec![oval]);
+            } else {
+                ovals.get_mut(&oval.detail).unwrap().push(oval);
+            }
+        }
 
-        let vertex_buffer = BufferCreator::vertex(device)
-            .label("Rect VertexBuffer")
-            .data(vertices).build();
+        let mut instance_buffer_groups = vec![];
 
-        let indices: Vec<_> = (0..(16 - 2))
-            .flat_map(|i| [0, i + 1, i + 2])
-            .collect();
+        for (detail, ovals) in ovals {
+            let vertices: Vec<_> = (0..detail)
+                .map(|i| {
+                    let angle = PI * 2.0 / detail as f32 * i as f32;
 
-        let indices_buffer = BufferCreator::indices(device)
-            .label("Rect IndicesBuffer")
-            .data(indices)
-            .build();
+                    Vertex { position: [angle.cos(), angle.sin()] }
+                })
+                .collect();
 
-        let instances: Vec<_> = self.ovals.iter()
-            .map(|oval| Instance {
-                position: [oval.pos.0, oval.pos.1],
-                scale: [oval.width, oval.height],
-                rotation: 0.0,
-                color: [oval.color.0, oval.color.1, oval.color.2],
-            })
-            .collect();
+            let vertex_buffer = BufferCreator::vertex(device)
+                .label("Rect VertexBuffer")
+                .data(vertices)
+                .build();
 
-        let instances_buffer = BufferCreator::vertex(device)
-            .label("Rect InstanceBuffer")
-            .data(instances)
-            .build();
+            let indices: Vec<_> = (0..(detail as i32 - 2))
+                .flat_map(|i| [0, i + 1, i + 2])
+                .collect();
 
-        (vertex_buffer, indices_buffer, instances_buffer)
+            let indices_buffer = BufferCreator::indices(device)
+                .label("Rect IndicesBuffer")
+                .data(indices)
+                .build();
+
+            let instances: Vec<_> = ovals.iter()
+                .map(|oval| Instance {
+                    position: [oval.pos.0, oval.pos.1],
+                    scale: [oval.width, oval.height],
+                    rotation: 0.0,
+                    color: [oval.color.0, oval.color.1, oval.color.2],
+                })
+                .collect();
+
+            let instances_buffer = BufferCreator::vertex(device)
+                .label("Rect InstanceBuffer")
+                .data(instances)
+                .build();
+
+            instance_buffer_groups.push(InstanceBufferGroup(vertex_buffer, indices_buffer, instances_buffer));
+        }
+
+        instance_buffer_groups
     }
 }
+
+struct InstanceBufferGroup(SimpleBuffer, SimpleBuffer, SimpleBuffer);
