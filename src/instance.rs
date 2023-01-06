@@ -6,11 +6,12 @@ pub struct Instance {
     pub rotation: f32,
     //todo transparency
     pub color: [f32; 3],
+    pub layer: u32,
 }
 
 impl Instance {
-    const ATTRIBS: [wgpu::VertexAttribute; 4] =
-        wgpu::vertex_attr_array![1 => Float32x2,2 => Float32x2,3 => Float32,4 => Float32x3];
+    const ATTRIBS: [wgpu::VertexAttribute; 5] =
+        wgpu::vertex_attr_array![1 => Float32x2,2 => Float32x2,3 => Float32,4 => Float32x3, 5 => Uint32];
 
     pub fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         use std::mem;

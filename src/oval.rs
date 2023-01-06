@@ -5,6 +5,7 @@ pub struct Oval {
     pub pos: (f32, f32),
     pub rotation: f32,
     pub color: (f32, f32, f32, f32),
+    pub layer: u32,
     pub detail: u32,
 }
 
@@ -34,6 +35,11 @@ impl Oval {
         self
     }
 
+    pub fn layer(&mut self, layer: u32) -> &mut Self {
+        self.layer = layer;
+        self
+    }
+
     pub fn detail(&mut self, detail: u32) -> &mut Self {
         self.detail = detail;
         self
@@ -48,6 +54,7 @@ impl Default for Oval {
             pos: (0.0, 0.0),
             rotation: 0.0,
             color: (0.0, 0.0, 1.0, 1.0),
+            layer: 0,
             detail: 128,
         }
     }

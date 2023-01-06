@@ -15,6 +15,7 @@ struct InstanceInput{
     @location(2) scale: vec2<f32>,
     @location(3) rotation: f32,
     @location(4) color: vec3<f32>,
+    @location(5) layer: u32,
 }
 
 struct VertexOutput {
@@ -25,21 +26,22 @@ struct VertexOutput {
 @vertex
 fn vs_main(
     model: VertexInput,
-    instace: InstanceInput
+    instance: InstanceInput
 ) -> VertexOutput {
     var out: VertexOutput;
-    out.color = instace.color;
+    out.color = instance.color;
 
-    var xScale = instace.scale.x / 2.0;
-    var yScale = instace.scale.y / 2.0;
+    var xScale = instance.scale.x / 2.0;
+    var yScale = instance.scale.y / 2.0;
 
     var xLocation = model.position.x * xScale;
     var yLocation = model.position.y * yScale;
+    var zLocation =  f32(instance.layer) / 4294967295.0;
 
-    var xPos = ((xLocation * cos(instace.rotation) - yLocation * sin(instace.rotation)) + instace.position.x - frameOffset.x) / frameSize.x * 2.0;
-    var yPos = ((xLocation * sin(instace.rotation) + yLocation * cos(instace.rotation)) + instace.position.y - frameOffset.y) / frameSize.y * 2.0;
+    var xPos = ((xLocation * cos(instance.rotation) - yLocation * sin(instance.rotation)) + instance.position.x - frameOffset.x) / frameSize.x * 2.0;
+    var yPos = ((xLocation * sin(instance.rotation) + yLocation * cos(instance.rotation)) + instance.position.y - frameOffset.y) / frameSize.y * 2.0;
 
-    out.clip_position = vec4<f32>(xPos,yPos,0.0, 1.0);
+    out.clip_position = vec4<f32>(xPos,yPos,zLocation, 1.0);
     return out;
 }
 
