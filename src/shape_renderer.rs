@@ -269,7 +269,7 @@ impl ShapeRenderer {
                 .map(|oval| Instance {
                     position: [oval.pos.0, oval.pos.1],
                     scale: [oval.width, oval.height],
-                    rotation: 0.0,
+                    rotation: oval.rotation,
                     color: [oval.color.0, oval.color.1, oval.color.2],
                 })
                 .collect();

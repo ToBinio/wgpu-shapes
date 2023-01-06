@@ -21,15 +21,12 @@ fn main() {
         .init(init)
         .update(update)
         .resize(resize)
-        .present_mode(PresentMode::Immediate)
         .run();
 }
 
 fn update(data: &AppData, state: &mut State) {
     state.rotation += 0.5 * data.delta_time as f32;
     state.shape_renderer.as_mut().unwrap().update_frame_offset((state.rotation.cos() * 50.0, 0.0));
-
-    println!("{}", data.fps);
 }
 
 fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, texture_view: TextureView) {
@@ -37,8 +34,8 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
     shape_renderer.clear();
 
-    for x in -200..=200 {
-        for y in -200..=200 {
+    for x in -10..=10 {
+        for y in -10..=10 {
             if x % 2 == 0 && y % 2 == 0 {
                 shape_renderer.rect()
                     .width(20.0)
