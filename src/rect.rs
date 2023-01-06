@@ -6,7 +6,7 @@ pub struct Rect {
     pub pos: (f32, f32),
     pub rotation: f32,
     pub color: (f32, f32, f32, f32),
-    pub layer: u32,
+    pub layer: u16,
 }
 
 impl Rect {
@@ -35,7 +35,7 @@ impl Rect {
         self
     }
 
-    pub fn layer(&mut self, layer: u32) -> &mut Self {
+    pub fn layer(&mut self, layer: u16) -> &mut Self {
         self.layer = layer;
         self
     }

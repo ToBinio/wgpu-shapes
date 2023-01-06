@@ -236,7 +236,7 @@ impl ShapeRenderer {
                 scale: [rect.width, rect.height],
                 rotation: rect.rotation,
                 color: [rect.color.0, rect.color.1, rect.color.2],
-                layer: rect.layer,
+                layer: rect.layer as u32,
             })
             .collect();
 
@@ -295,7 +295,7 @@ impl ShapeRenderer {
                     scale: [oval.width, oval.height],
                     rotation: oval.rotation,
                     color: [oval.color.0, oval.color.1, oval.color.2],
-                    layer: oval.layer,
+                    layer: oval.layer as u32,
                 })
                 .collect();
 

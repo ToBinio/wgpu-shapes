@@ -36,7 +36,7 @@ fn vs_main(
 
     var xLocation = model.position.x * xScale;
     var yLocation = model.position.y * yScale;
-    var zLocation =  f32(instance.layer) / 4294967295.0;
+    var zLocation =  0.9 - (f32(instance.layer) / 75000.0);
 
     var xPos = ((xLocation * cos(instance.rotation) - yLocation * sin(instance.rotation)) + instance.position.x - frameOffset.x) / frameSize.x * 2.0;
     var yPos = ((xLocation * sin(instance.rotation) + yLocation * cos(instance.rotation)) + instance.position.y - frameOffset.y) / frameSize.y * 2.0;
