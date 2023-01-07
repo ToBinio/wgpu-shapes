@@ -1,55 +1,45 @@
-//todo rework with basic shape
+use wgpu::Color;
+
+use crate::instance::Instance;
+use crate::shapes::{BasicShape, BasicShapeData};
+
+#[derive(Default)]
 pub struct Rect {
-    pub width: f32,
-    pub height: f32,
-    //todo rename to location
-    pub pos: (f32, f32),
-    pub rotation: f32,
-    pub color: (f32, f32, f32),
-    pub layer: u16,
+    data: BasicShapeData,
 }
 
-impl Rect {
-    pub fn width(&mut self, width: f32) -> &mut Self {
-        self.width = width;
+impl BasicShape for Rect {
+    fn scale(&mut self, width: f32, height: f32) -> &mut Self {
+        self.data.scale = (width, height);
         self
     }
 
-    pub fn height(&mut self, height: f32) -> &mut Self {
-        self.height = height;
+    fn pos(&mut self, x: f32, y: f32) -> &mut Self {
+        self.data.pos = (x, y);
         self
     }
 
-    pub fn color(&mut self, color: (f32, f32, f32)) -> &mut Self {
-        self.color = color;
+    fn rotation(&mut self, rotation: f32) -> &mut Self {
+        self.data.rotation = rotation;
         self
     }
 
-    pub fn rotation(&mut self, rotation: f32) -> &mut Self {
-        self.rotation = rotation;
+    fn color(&mut self, red: f32, green: f32, blue: f32) -> &mut Self {
+        self.data.color = (red, green, blue);
         self
     }
 
-    pub fn pos(&mut self, pos: (f32, f32)) -> &mut Self {
-        self.pos = pos;
+    fn color_from_color(&mut self, color: Color) -> &mut Self {
+        self.data.color = (color.r as f32, color.g as f32, color.b as f32);
         self
     }
 
-    pub fn layer(&mut self, layer: u16) -> &mut Self {
-        self.layer = layer;
+    fn layer(&mut self, layer: u16) -> &mut Self {
+        self.data.layer = layer;
         self
     }
-}
 
-impl Default for Rect {
-    fn default() -> Self {
-        Rect {
-            width: 20.0,
-            height: 20.0,
-            pos: (0.0, 0.0),
-            rotation: 0.0,
-            color: (0.0, 0.0, 1.0),
-            layer: 0
-        }
+    fn to_instance(&self) -> Instance {
+        (&self.data).into()
     }
 }

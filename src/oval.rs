@@ -1,45 +1,50 @@
+use wgpu::Color;
+
+use crate::instance::Instance;
+use crate::shapes::{BasicShape, BasicShapeData};
+
 pub struct Oval {
-    pub width: f32,
-    pub height: f32,
-    //todo rename to location
-    pub pos: (f32, f32),
-    pub rotation: f32,
-    pub color: (f32, f32, f32),
-    pub layer: u16,
+    data: BasicShapeData,
     pub detail: u32,
 }
 
+impl BasicShape for Oval {
+    fn scale(&mut self, width: f32, height: f32) -> &mut Self {
+        self.data.scale = (width, height);
+        self
+    }
+
+    fn pos(&mut self, x: f32, y: f32) -> &mut Self {
+        self.data.pos = (x, y);
+        self
+    }
+
+    fn rotation(&mut self, rotation: f32) -> &mut Self {
+        self.data.rotation = rotation;
+        self
+    }
+
+    fn color(&mut self, red: f32, green: f32, blue: f32) -> &mut Self {
+        self.data.color = (red, green, blue);
+        self
+    }
+
+    fn color_from_color(&mut self, color: Color) -> &mut Self {
+        self.data.color = (color.r as f32, color.g as f32, color.b as f32);
+        self
+    }
+
+    fn layer(&mut self, layer: u16) -> &mut Self {
+        self.data.layer = layer;
+        self
+    }
+
+    fn to_instance(&self) -> Instance {
+        (&self.data).into()
+    }
+}
+
 impl Oval {
-    pub fn width(&mut self, width: f32) -> &mut Self {
-        self.width = width;
-        self
-    }
-
-    pub fn height(&mut self, height: f32) -> &mut Self {
-        self.height = height;
-        self
-    }
-
-    pub fn color(&mut self, color: (f32, f32, f32)) -> &mut Self {
-        self.color = color;
-        self
-    }
-
-    pub fn pos(&mut self, pos: (f32, f32)) -> &mut Self {
-        self.pos = pos;
-        self
-    }
-
-    pub fn rotation(&mut self, rotation: f32) -> &mut Self {
-        self.rotation = rotation;
-        self
-    }
-
-    pub fn layer(&mut self, layer: u16) -> &mut Self {
-        self.layer = layer;
-        self
-    }
-
     pub fn detail(&mut self, detail: u32) -> &mut Self {
         self.detail = detail;
         self
@@ -49,12 +54,7 @@ impl Oval {
 impl Default for Oval {
     fn default() -> Self {
         Oval {
-            width: 20.0,
-            height: 20.0,
-            pos: (0.0, 0.0),
-            rotation: 0.0,
-            color: (0.0, 0.0, 1.0),
-            layer: 0,
+            data: Default::default(),
             detail: 128,
         }
     }

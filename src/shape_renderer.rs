@@ -11,6 +11,7 @@ use crate::depth_buffer::Texture;
 use crate::instance::Instance;
 use crate::oval::Oval;
 use crate::rect::Rect;
+use crate::shapes::BasicShape;
 use crate::vertex::Vertex;
 
 pub struct ShapeRenderer {
@@ -231,13 +232,7 @@ impl ShapeRenderer {
             .build();
 
         let instances: Vec<_> = self.recs.iter()
-            .map(|rect| Instance {
-                position: [rect.pos.0, rect.pos.1],
-                scale: [rect.width, rect.height],
-                rotation: rect.rotation,
-                color: [rect.color.0, rect.color.1, rect.color.2],
-                layer: rect.layer as u32,
-            })
+            .map(|rect| rect.to_instance())
             .collect();
 
         let instances_buffer = BufferCreator::vertex(device)
@@ -290,13 +285,7 @@ impl ShapeRenderer {
                 .build();
 
             let instances: Vec<_> = ovals.iter()
-                .map(|oval| Instance {
-                    position: [oval.pos.0, oval.pos.1],
-                    scale: [oval.width, oval.height],
-                    rotation: oval.rotation,
-                    color: [oval.color.0, oval.color.1, oval.color.2],
-                    layer: oval.layer as u32,
-                })
+                .map(|oval| oval.to_instance())
                 .collect();
 
             let instances_buffer = BufferCreator::vertex(device)
