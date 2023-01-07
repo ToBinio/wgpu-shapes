@@ -4,7 +4,7 @@ pub struct Oval {
     //todo rename to location
     pub pos: (f32, f32),
     pub rotation: f32,
-    pub color: (f32, f32, f32, f32),
+    pub color: (f32, f32, f32),
     pub layer: u16,
     pub detail: u32,
 }
@@ -20,7 +20,7 @@ impl Oval {
         self
     }
 
-    pub fn color(&mut self, color: (f32, f32, f32, f32)) -> &mut Self {
+    pub fn color(&mut self, color: (f32, f32, f32)) -> &mut Self {
         self.color = color;
         self
     }
@@ -53,7 +53,7 @@ impl Default for Oval {
             height: 20.0,
             pos: (0.0, 0.0),
             rotation: 0.0,
-            color: (0.0, 0.0, 1.0, 1.0),
+            color: (0.0, 0.0, 1.0),
             layer: 0,
             detail: 128,
         }

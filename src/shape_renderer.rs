@@ -118,7 +118,7 @@ impl ShapeRenderer {
             frame_group_layout: frame_size_group_layout,
             frame_size: (800.0, 600.0),
             frame_offset: (0.0, 0.0),
-            depth_texture: Texture::create_depth_texture(&device, &config, "depth_texture"),
+            depth_texture: Texture::create_depth_texture(device, config, "depth_texture"),
         }
     }
 

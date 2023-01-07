@@ -37,31 +37,31 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
     shape_renderer.oval()
         .width(500.0)
         .height(500.0)
-        .color((0.0, 0.0, 0.0, 0.0))
+        .color((0.0, 0.0, 0.0))
         .layer(0);
 
     shape_renderer.rect()
         .width(400.0)
         .height(400.0)
-        .color((1.0, 0.0, 0.0, 0.0))
+        .color((1.0, 0.0, 0.0))
         .layer(1);
 
     shape_renderer.oval()
         .width(300.0)
         .height(300.0)
-        .color((0.0, 1.0, 0.0, 0.0))
+        .color((0.0, 1.0, 0.0))
         .layer(4);
 
     shape_renderer.rect()
         .width(200.0)
         .height(200.0)
-        .color((0.0, 0.0, 1.0, 0.0))
+        .color((0.0, 0.0, 1.0))
         .layer(30);
 
     shape_renderer.oval()
         .width(100.0)
         .height(100.0)
-        .color((1.0, 0.0, 1.0, 0.0))
+        .color((1.0, 0.0, 1.0))
         .layer(100);
 
     shape_renderer.render(RenderPassCreator::new(&mut encoder, &texture_view), &data.device);

@@ -5,6 +5,7 @@ pub struct Instance {
     pub scale: [f32; 2],
     pub rotation: f32,
     //todo transparency
+    //problem: transparency only works in the same drawCall
     pub color: [f32; 3],
     pub layer: u32,
 }
