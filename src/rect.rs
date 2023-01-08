@@ -5,7 +5,7 @@ use crate::shapes::{BasicShape, BasicShapeData};
 
 #[derive(Default)]
 pub struct Rect {
-    data: BasicShapeData,
+    pub(crate) data: BasicShapeData,
 }
 
 impl BasicShape for Rect {

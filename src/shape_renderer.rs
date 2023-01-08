@@ -2,7 +2,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use wgpu::{BindGroupLayout, Device, include_wgsl, RenderPipeline, SurfaceConfiguration};
+use wgpu::{BindGroupLayout, Color, CommandEncoder, Device, include_wgsl, RenderPipeline, SurfaceConfiguration, TextureView};
 use wgpu::util::DeviceExt;
 use wgpu_noboiler::buffer::{BufferCreator, SimpleBuffer};
 use wgpu_noboiler::render_pass::RenderPassCreator;
@@ -23,6 +23,8 @@ pub struct ShapeRenderer {
     frame_group_layout: BindGroupLayout,
     frame_size: (f32, f32),
     frame_offset: (f32, f32),
+
+    background_color: Color,
 
     depth_texture: Texture,
 }
@@ -119,12 +121,14 @@ impl ShapeRenderer {
             frame_group_layout: frame_size_group_layout,
             frame_size: (800.0, 600.0),
             frame_offset: (0.0, 0.0),
+
+            background_color: Color::WHITE,
+
             depth_texture: Texture::create_depth_texture(device, config, "depth_texture"),
         }
     }
 
-    //todo rework so instead of RenderPassCreator you get the RenderPassDescriptor
-    pub fn render<'a, 'b : 'a>(&'b self, render_pass: RenderPassCreator<'a>, device: &Device) {
+    pub fn render<'a, 'b : 'a>(&'b self, encoder: &mut CommandEncoder, texture_view: &TextureView, device: &Device) {
         let frame_size_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Frame size Buffer"),
@@ -159,14 +163,18 @@ impl ShapeRenderer {
         let InstanceBufferGroup(rect_vertex_buffer, rect_indices_buffer, rect_instance_buffer) = self.generate_rect_buffer(device);
         let oval_buffers = self.generate_oval_buffer(device);
 
-        let mut render_pass = render_pass.depth_stencil_attachment(wgpu::RenderPassDepthStencilAttachment {
-            view: &self.depth_texture.view,
-            depth_ops: Some(wgpu::Operations {
-                load: wgpu::LoadOp::Clear(1.0),
-                store: true,
-            }),
-            stencil_ops: None,
-        }).build();
+
+        let mut render_pass = RenderPassCreator::new(texture_view)
+            .depth_stencil_attachment(wgpu::RenderPassDepthStencilAttachment {
+                view: &self.depth_texture.view,
+                depth_ops: Some(wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(1.0),
+                    store: true,
+                }),
+                stencil_ops: None,
+            })
+            .clear_color(self.background_color)
+            .build(encoder);
 
         render_pass.set_pipeline(&self.render_pipeline);
         render_pass.set_bind_group(0, &frame_bind_group, &[]);
@@ -196,9 +204,22 @@ impl ShapeRenderer {
         self.ovals.clear();
     }
 
-    pub fn update_frame_size(&mut self, frame_size: (f32, f32)) -> &mut Self {
+    pub fn set_frame_size(&mut self, frame_size: (f32, f32)) -> &mut Self {
         self.frame_size = frame_size;
         self
+    }
+
+    pub fn frame_size(&self) -> (f32, f32) {
+        self.frame_size
+    }
+
+    pub fn set_frame_offset(&mut self, frame_offset: (f32, f32)) -> &mut Self {
+        self.frame_offset = frame_offset;
+        self
+    }
+
+    pub fn frame_offset(&self) -> (f32, f32) {
+        self.frame_offset
     }
 
     pub fn resize(&mut self, device: &Device, config: &SurfaceConfiguration) -> &mut Self {
@@ -206,10 +227,11 @@ impl ShapeRenderer {
         self
     }
 
-    pub fn update_frame_offset(&mut self, frame_offset: (f32, f32)) -> &mut Self {
-        self.frame_offset = frame_offset;
+    pub fn background_color(&mut self, background_color: Color) -> &mut Self {
+        self.background_color = background_color;
         self
     }
+
 
     pub fn rect(&mut self) -> &mut Rect {
         self.recs.push(Rect::default());

@@ -4,8 +4,8 @@ use crate::instance::Instance;
 use crate::shapes::{BasicShape, BasicShapeData};
 
 pub struct Oval {
-    data: BasicShapeData,
-    pub detail: u32,
+    pub(crate) data: BasicShapeData,
+    pub(crate) detail: u32,
 }
 
 impl BasicShape for Oval {
