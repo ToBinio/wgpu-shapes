@@ -84,8 +84,8 @@ fn event(_app_data: &AppData, app_state: &mut State, window_event: &WindowEvent)
                 let mut offset = renderer.frame_offset();
 
                 if app_state.last_drag_pos != (-1.0, -1.0) {
-                    offset.0 += app_state.last_drag_pos.0 - position.x as f32;
-                    offset.1 -= app_state.last_drag_pos.1 - position.y as f32;
+                    offset.0 -= app_state.last_drag_pos.0 - position.x as f32;
+                    offset.1 += app_state.last_drag_pos.1 - position.y as f32;
                 }
 
                 renderer.set_frame_offset(offset);

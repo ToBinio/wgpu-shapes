@@ -38,8 +38,8 @@ fn vs_main(
     var yLocation = model.position.y * yScale;
     var zLocation =  0.9 - (f32(instance.layer) / 75000.0);
 
-    var xPos = ((xLocation * cos(instance.rotation) - yLocation * sin(instance.rotation)) + instance.position.x - frameOffset.x) / frameSize.x * 2.0;
-    var yPos = ((xLocation * sin(instance.rotation) + yLocation * cos(instance.rotation)) + instance.position.y - frameOffset.y) / frameSize.y * 2.0;
+    var xPos = ((xLocation * cos(instance.rotation) - yLocation * sin(instance.rotation)) + instance.position.x + frameOffset.x) / frameSize.x * 2.0;
+    var yPos = ((xLocation * sin(instance.rotation) + yLocation * cos(instance.rotation)) + instance.position.y + frameOffset.y) / frameSize.y * 2.0;
 
     out.clip_position = vec4<f32>(xPos,yPos,zLocation, 1.0);
     return out;
