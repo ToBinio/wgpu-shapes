@@ -1,7 +1,7 @@
-pub mod rect;
 pub mod shape_renderer;
+pub mod rect;
+pub mod oval;
+pub mod shapes;
 mod vertex;
 mod instance;
-pub mod oval;
 mod depth_buffer;
-pub mod shapes;
