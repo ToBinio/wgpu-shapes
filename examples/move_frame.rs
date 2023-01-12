@@ -1,6 +1,6 @@
 use std::iter::once;
 
-use wgpu::{Color, CommandEncoder, RenderPipeline, TextureView};
+use wgpu::{CommandEncoder, RenderPipeline, TextureView};
 use wgpu_noboiler::app::{AppCreator, AppData};
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, WindowEvent};
