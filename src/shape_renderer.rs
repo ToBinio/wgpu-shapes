@@ -6,13 +6,14 @@ use wgpu::{BindGroupLayout, Color, CommandEncoder, Device, include_wgsl, RenderP
 use wgpu::util::DeviceExt;
 use wgpu_noboiler::buffer::{BufferCreator, SimpleBuffer};
 use wgpu_noboiler::render_pass::RenderPassCreator;
+use wgpu_noboiler::vertex::Vertex;
 
 use crate::depth_buffer::Texture;
 use crate::instance::Instance;
 use crate::oval::Oval;
 use crate::rect::Rect;
 use crate::shapes::BasicShape;
-use crate::vertex::Vertex;
+use crate::vertex::Vertex as OwnVertex;
 
 /// helps to draw basic [BasicShapes](BasicShape)
 pub struct ShapeRenderer {
@@ -80,8 +81,8 @@ impl ShapeRenderer {
                 module: &shader,
                 entry_point: "vs_main",
                 buffers: &[
-                    Vertex::desc(),
-                    Instance::desc()
+                    OwnVertex::descriptor(),
+                    Instance::descriptor()
                 ],
             },
             fragment: Some(wgpu::FragmentState {
@@ -259,10 +260,10 @@ impl ShapeRenderer {
         let vertex_buffer = BufferCreator::vertex(device)
             .label("Rect VertexBuffer")
             .data(vec![
-                Vertex { position: [1.0, 1.0] },
-                Vertex { position: [-1.0, 1.0] },
-                Vertex { position: [-1.0, -1.0] },
-                Vertex { position: [1.0, -1.0] },
+                OwnVertex { position: [1.0, 1.0] },
+                OwnVertex { position: [-1.0, 1.0] },
+                OwnVertex { position: [-1.0, -1.0] },
+                OwnVertex { position: [1.0, -1.0] },
             ]).build();
 
         let indices_buffer = BufferCreator::indices(device)
@@ -306,7 +307,7 @@ impl ShapeRenderer {
                 .map(|i| {
                     let angle = PI * 2.0 / detail as f32 * i as f32;
 
-                    Vertex { position: [angle.cos(), angle.sin()] }
+                    OwnVertex { position: [angle.cos(), angle.sin()] }
                 })
                 .collect();
 
