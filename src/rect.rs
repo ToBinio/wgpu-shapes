@@ -3,6 +3,7 @@ use wgpu::Color;
 use crate::instance::Instance;
 use crate::shapes::{BasicShape, BasicShapeData};
 
+/// Shape which can be render and created which though the [rect](shape_renderer::ShapeRenderer::rect)
 #[derive(Default)]
 pub struct Rect {
     pub(crate) data: BasicShapeData,

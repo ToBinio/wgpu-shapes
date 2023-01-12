@@ -35,16 +35,24 @@ impl Default for BasicShapeData {
 }
 
 pub trait BasicShape {
+    /// size of the shape
     fn scale(&mut self, width: f32, height: f32) -> &mut Self;
 
+    /// location of the shape in the frame
     fn pos(&mut self, x: f32, y: f32) -> &mut Self;
 
+    /// rotation of the shape in radians
     fn rotation(&mut self, rotation: f32) -> &mut Self;
 
+    /// fill color of the shape
     fn color(&mut self, red: f32, green: f32, blue: f32) -> &mut Self;
 
+    /// fill color of the shape
     fn color_from_color(&mut self, color: Color) -> &mut Self;
 
+    /// render layer of the shape
+    ///
+    /// higher layer -> foreground
     fn layer(&mut self, layer: u16) -> &mut Self;
 
     fn to_instance(&self) -> Instance;

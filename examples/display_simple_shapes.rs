@@ -35,7 +35,7 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
         .pos(25.0, 50.0)
         .color(0.1, 0.5, 1.0)
         .scale(200.0, 50.0)
-        .detail(6)
+        .segment_count(6)
         .rotation(PI / 4.0)
         .layer(0);
 
@@ -43,7 +43,7 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
         .pos(25.0, 50.0)
         .color(0.1, 0.5, 1.0)
         .scale(200.0, 50.0)
-        .detail(6)
+        .segment_count(6)
         .rotation(-PI / 4.0)
         .layer(0);
 

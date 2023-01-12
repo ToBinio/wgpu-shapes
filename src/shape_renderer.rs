@@ -14,6 +14,7 @@ use crate::rect::Rect;
 use crate::shapes::BasicShape;
 use crate::vertex::Vertex;
 
+/// helps to draw basic [BasicShapes](BasicShape)
 pub struct ShapeRenderer {
     render_pipeline: RenderPipeline,
 
@@ -30,6 +31,10 @@ pub struct ShapeRenderer {
 }
 
 impl ShapeRenderer {
+    /// creates a new [ShapeRenderer] which can render [BasicShape].
+    /// these can be created with [ShapeRenderer::rect], [ShapeRenderer::oval]
+    ///
+    /// can be reused with [ShapeRenderer::clear] function
     pub fn new(device: &Device, config: &SurfaceConfiguration) -> ShapeRenderer {
         let shader = device.create_shader_module(include_wgsl!("../resources/shader.wgsl"));
 
@@ -128,6 +133,7 @@ impl ShapeRenderer {
         }
     }
 
+    /// renders the current [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval]
     pub fn render<'a, 'b : 'a>(&'b self, encoder: &mut CommandEncoder, texture_view: &TextureView, device: &Device) {
         let frame_size_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
@@ -199,40 +205,51 @@ impl ShapeRenderer {
         }
     }
 
+    /// clears the current drawn [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval]
     pub fn clear(&mut self) {
         self.recs.clear();
         self.ovals.clear();
     }
 
+    /// sets the current [frame_size](ShapeRenderer::frame_size)
     pub fn set_frame_size(&mut self, frame_size: (f32, f32)) -> &mut Self {
         self.frame_size = frame_size;
         self
     }
 
+    /// frame_size.0 is the with in which [BasicShape] get displayed.
+    ///
+    /// frame_size.1 is the height in which [BasicShape] get displayed
+    ///
+    /// (0,0) -> center of screen
     pub fn frame_size(&self) -> (f32, f32) {
         self.frame_size
     }
 
+    /// sets the current [frame_offset](ShapeRenderer::frame_offset)
     pub fn set_frame_offset(&mut self, frame_offset: (f32, f32)) -> &mut Self {
         self.frame_offset = frame_offset;
         self
     }
 
+    /// frame_offset are values which get added to all [BasicShape]
     pub fn frame_offset(&self) -> (f32, f32) {
         self.frame_offset
     }
 
+    /// resizes the depthBuffer should be called on every window resize
     pub fn resize(&mut self, device: &Device, config: &SurfaceConfiguration) -> &mut Self {
         self.depth_texture = Texture::create_depth_texture(device, config, "depth_texture");
         self
     }
 
+    /// sets the clearColor/ backgroundColor
     pub fn background_color(&mut self, background_color: Color) -> &mut Self {
         self.background_color = background_color;
         self
     }
 
-
+    /// renders [Rect] and returns a Ref to it
     pub fn rect(&mut self) -> &mut Rect {
         self.recs.push(Rect::default());
         self.recs.last_mut().unwrap()
@@ -265,6 +282,7 @@ impl ShapeRenderer {
         InstanceBufferGroup(vertex_buffer, indices_buffer, instances_buffer)
     }
 
+    /// renders [Oval] and returns a Ref to it
     pub fn oval(&mut self) -> &mut Oval {
         self.ovals.push(Oval::default());
         self.ovals.last_mut().unwrap()

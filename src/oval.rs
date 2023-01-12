@@ -3,6 +3,7 @@ use wgpu::Color;
 use crate::instance::Instance;
 use crate::shapes::{BasicShape, BasicShapeData};
 
+/// Shape which can be render and created which though the [oval](shape_renderer::ShapeRenderer::oval)
 pub struct Oval {
     pub(crate) data: BasicShapeData,
     pub(crate) detail: u32,
@@ -45,8 +46,11 @@ impl BasicShape for Oval {
 }
 
 impl Oval {
-    pub fn detail(&mut self, detail: u32) -> &mut Self {
-        self.detail = detail;
+    ///segment count of the oval
+    ///
+    /// higher -> smoother circle
+    pub fn segment_count(&mut self, segment_count: u32) -> &mut Self {
+        self.detail = segment_count;
         self
     }
 }
