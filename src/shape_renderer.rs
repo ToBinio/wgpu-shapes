@@ -1,8 +1,9 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::f32::consts::PI;
+use image::GenericImageView;
 
-use wgpu::{BindGroupLayout, Color, CommandEncoder, Device, include_wgsl, RenderPipeline, SurfaceConfiguration, TextureView};
+use wgpu::{BindGroupLayout, Color, CommandEncoder, Device, include_wgsl, Queue, RenderPipeline, Sampler, SurfaceConfiguration, TextureView};
 use wgpu::util::DeviceExt;
 use wgpu_noboiler::buffer::{BufferCreator, SimpleBuffer};
 use wgpu_noboiler::render_pass::RenderPassCreator;
@@ -29,6 +30,9 @@ pub struct ShapeRenderer {
     background_color: Color,
 
     depth_texture: Texture,
+
+    textures: Vec<(TextureView, Sampler)>,
+    textures_bind_groups: Vec<BindGroupLayout>,
 }
 
 impl ShapeRenderer {
@@ -131,6 +135,9 @@ impl ShapeRenderer {
             background_color: Color::WHITE,
 
             depth_texture: Texture::create_depth_texture(device, config, "depth_texture"),
+
+            textures: vec![],
+            textures_bind_groups: vec![],
         }
     }
 
@@ -169,7 +176,6 @@ impl ShapeRenderer {
 
         let InstanceBufferGroup(rect_vertex_buffer, rect_indices_buffer, rect_instance_buffer) = self.generate_rect_buffer(device);
         let oval_buffers = self.generate_oval_buffer(device);
-
 
         let mut render_pass = RenderPassCreator::new(texture_view)
             .depth_stencil_attachment(wgpu::RenderPassDepthStencilAttachment {
@@ -338,6 +344,60 @@ impl ShapeRenderer {
         }
 
         instance_buffer_groups
+    }
+
+    pub fn add_texture_from_bytes(&mut self, bytes: &[u8], device: &Device, queue: &Queue) {
+        let diffuse_image = image::load_from_memory(bytes).unwrap();
+        let diffuse_rgba = diffuse_image.to_rgba8();
+
+        let dimensions = diffuse_image.dimensions();
+
+        let texture_size = wgpu::Extent3d {
+            width: dimensions.0,
+            height: dimensions.1,
+            depth_or_array_layers: 1,
+        };
+
+        let diffuse_texture = device.create_texture(
+            &wgpu::TextureDescriptor {
+                // All textures are stored as 3D, we represent our 2D texture
+                // by setting depth to 1.
+                size: texture_size,
+                mip_level_count: 1, // We'll talk about this a little later
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                // Most images are stored using sRGB so we need to reflect that here.
+                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                // TEXTURE_BINDING tells wgpu that we want to use this texture in shaders
+                // COPY_DST means that we want to copy data to this texture
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+                label: Some("diffuse_texture"),
+            }
+        );
+
+        queue.write_texture(
+            // Tells wgpu where to copy the pixel data
+            wgpu::ImageCopyTexture {
+                texture: &diffuse_texture,
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+                aspect: wgpu::TextureAspect::All,
+            },
+            // The actual pixel data
+            &diffuse_rgba,
+            // The layout of the texture
+            wgpu::ImageDataLayout {
+                offset: 0,
+                bytes_per_row: std::num::NonZeroU32::new(4 * dimensions.0),
+                rows_per_image: std::num::NonZeroU32::new(dimensions.1),
+            },
+            texture_size,
+        );
+
+        let diffuse_texture_view = diffuse_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let diffuse_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
+
+        self.textures.push((diffuse_texture_view, diffuse_sampler));
     }
 }
 
