@@ -19,3 +19,19 @@ impl Vertex<5> for Instance {
     const ATTRIBS: [wgpu::VertexAttribute; 5] =
         wgpu::vertex_attr_array![1 => Float32x2,2 => Float32x2,3 => Float32,4 => Float32x3, 5 => Uint32];
 }
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct TextureInstance {
+    pub position: [f32; 2],
+    pub scale: [f32; 2],
+    pub rotation: f32,
+    pub layer: u32,
+}
+
+impl Vertex<4> for TextureInstance {
+    const STEP_MODE: VertexStepMode = VertexStepMode::Instance;
+
+    const ATTRIBS: [wgpu::VertexAttribute; 4] =
+        wgpu::vertex_attr_array![1 => Float32x2,2 => Float32x2,3 => Float32, 4 => Uint32];
+}

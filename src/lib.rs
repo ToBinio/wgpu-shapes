@@ -10,3 +10,4 @@ pub mod shapes;
 mod vertex;
 mod instance;
 mod depth_buffer;
+pub mod texture;

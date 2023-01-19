@@ -60,6 +60,10 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
         .color(1.0, 0.0, 1.0)
         .layer(100);
 
+    shape_renderer.image()
+        .scale(200.0, 200.0)
+        .layer(105);
+
     shape_renderer.render(&mut encoder, &texture_view, &data.device);
 
     data.queue.submit(once(encoder.finish()));
@@ -67,6 +71,7 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
 fn init(data: &AppData, state: &mut State, _: &mut Vec<RenderPipeline>) {
     state.shape_renderer = Some(ShapeRenderer::new(&data.device, &data.config));
+    state.shape_renderer.as_mut().unwrap().add_texture_from_bytes(include_bytes!("img.png"), &data.device, &data.queue);
 }
 
 fn resize(data: &AppData, state: &mut State, size: &PhysicalSize<u32>) {

@@ -3,25 +3,29 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 use image::GenericImageView;
 
-use wgpu::{BindGroupLayout, Color, CommandEncoder, Device, include_wgsl, Queue, RenderPipeline, Sampler, SurfaceConfiguration, TextureView};
+use wgpu::{BindGroup, BindGroupLayout, Color, CommandEncoder, Device, include_wgsl, Queue, RenderPipeline, SamplerDescriptor, SurfaceConfiguration, TextureView};
 use wgpu::util::DeviceExt;
 use wgpu_noboiler::buffer::{BufferCreator, SimpleBuffer};
 use wgpu_noboiler::render_pass::RenderPassCreator;
+use wgpu_noboiler::render_pipeline::RenderPipelineCreator;
 use wgpu_noboiler::vertex::Vertex;
 
-use crate::depth_buffer::Texture;
-use crate::instance::Instance;
+use crate::depth_buffer::DepthBuffer;
+use crate::instance::{Instance, TextureInstance};
 use crate::oval::Oval;
 use crate::rect::Rect;
 use crate::shapes::BasicShape;
+use crate::texture::Imgage;
 use crate::vertex::Vertex as OwnVertex;
 
 /// helps to draw basic [BasicShapes](BasicShape)
 pub struct ShapeRenderer {
-    render_pipeline: RenderPipeline,
+    shape_render_pipeline: RenderPipeline,
+    texture_render_pipeline: RenderPipeline,
 
     recs: Vec<Rect>,
     ovals: Vec<Oval>,
+    images: Vec<Imgage>,
 
     frame_group_layout: BindGroupLayout,
     frame_size: (f32, f32),
@@ -29,10 +33,10 @@ pub struct ShapeRenderer {
 
     background_color: Color,
 
-    depth_texture: Texture,
+    depth_texture: DepthBuffer,
 
-    textures: Vec<(TextureView, Sampler)>,
-    textures_bind_groups: Vec<BindGroupLayout>,
+    texture_group_layout: BindGroupLayout,
+    texture: Option<TextureView>,
 }
 
 impl ShapeRenderer {
@@ -41,8 +45,6 @@ impl ShapeRenderer {
     ///
     /// can be reused with [ShapeRenderer::clear] function
     pub fn new(device: &Device, config: &SurfaceConfiguration) -> ShapeRenderer {
-        let shader = device.create_shader_module(include_wgsl!("../resources/shader.wgsl"));
-
         let frame_size_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
@@ -69,64 +71,65 @@ impl ShapeRenderer {
             label: Some("Frame Bind group"),
         });
 
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[
-                    &frame_size_group_layout
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        // This should match the filterable field of the
+                        // corresponding Texture entry above.
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
                 ],
-                push_constant_ranges: &[],
+                label: Some("texture_bind_group_layout"),
             });
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[
-                    OwnVertex::descriptor(),
-                    Instance::descriptor()
-                ],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                polygon_mode: wgpu::PolygonMode::Fill,
-                unclipped_depth: false,
-                conservative: false,
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: Texture::DEPTH_FORMAT,
+        let shape_render_pipeline = RenderPipelineCreator::from_shader_code(include_str!("../resources/shape_shader.wgsl"), device, config)
+            .add_bind_group(&frame_size_group_layout)
+            .add_vertex_buffer(OwnVertex::descriptor())
+            .add_vertex_buffer(Instance::descriptor())
+            .depth_stencil(wgpu::DepthStencilState {
+                format: DepthBuffer::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
-            }),
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-        });
+            })
+            .build();
+
+        let texture_render_pipeline = RenderPipelineCreator::from_shader_code(include_str!("../resources/texture_shader.wgsl"), device, config)
+            .add_bind_group(&frame_size_group_layout)
+            .add_bind_group(&texture_bind_group_layout)
+            .add_vertex_buffer(OwnVertex::descriptor())
+            .add_vertex_buffer(TextureInstance::descriptor())
+            .depth_stencil(wgpu::DepthStencilState {
+                format: DepthBuffer::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            })
+            .build();
 
         ShapeRenderer {
-            render_pipeline,
+            shape_render_pipeline,
+            texture_render_pipeline,
 
             recs: vec![],
             ovals: vec![],
+            images: vec![],
 
             frame_group_layout: frame_size_group_layout,
             frame_size: (800.0, 600.0),
@@ -134,15 +137,14 @@ impl ShapeRenderer {
 
             background_color: Color::WHITE,
 
-            depth_texture: Texture::create_depth_texture(device, config, "depth_texture"),
+            depth_texture: DepthBuffer::create_depth_texture(device, config, "depth_texture"),
 
-            textures: vec![],
-            textures_bind_groups: vec![],
+            texture_group_layout: texture_bind_group_layout,
+            texture: None,
         }
     }
 
-    /// renders the current [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval]
-    pub fn render<'a, 'b : 'a>(&'b self, encoder: &mut CommandEncoder, texture_view: &TextureView, device: &Device) {
+    fn frame_bind_group(&self, device: &Device) -> BindGroup {
         let frame_size_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Frame size Buffer"),
@@ -159,7 +161,7 @@ impl ShapeRenderer {
             }
         );
 
-        let frame_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &self.frame_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
@@ -172,10 +174,39 @@ impl ShapeRenderer {
                 }
             ],
             label: Some("frame_size_bind_group"),
-        });
+        })
+    }
 
+    fn texture_bind_group(&self, device: &Device) -> Option<BindGroup> {
+        self.texture.as_ref()?;
+
+        Some(device.create_bind_group(
+            &wgpu::BindGroupDescriptor {
+                layout: &self.texture_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(self.texture.as_ref().unwrap()),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&device.create_sampler(&SamplerDescriptor::default())),
+                    }
+                ],
+                label: Some("diffuse_bind_group"),
+            }
+        ))
+    }
+
+    /// renders the current [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval]
+    pub fn render<'a, 'b : 'a>(&'b self, encoder: &mut CommandEncoder, texture_view: &TextureView, device: &Device) {
         let InstanceBufferGroup(rect_vertex_buffer, rect_indices_buffer, rect_instance_buffer) = self.generate_rect_buffer(device);
         let oval_buffers = self.generate_oval_buffer(device);
+
+        let InstanceBufferGroup(texture_vertex_buffer, texture_indices_buffer, texture_instance_buffer) = self.generate_image_buffer(device);
+
+        let frame_bind_group = self.frame_bind_group(device);
+        let texture_bind_group = self.texture_bind_group(device);
 
         let mut render_pass = RenderPassCreator::new(texture_view)
             .depth_stencil_attachment(wgpu::RenderPassDepthStencilAttachment {
@@ -189,7 +220,7 @@ impl ShapeRenderer {
             .clear_color(self.background_color)
             .build(encoder);
 
-        render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.set_pipeline(&self.shape_render_pipeline);
         render_pass.set_bind_group(0, &frame_bind_group, &[]);
 
         //rects
@@ -210,6 +241,23 @@ impl ShapeRenderer {
 
             render_pass.draw_indexed(0..oval_indices_buffer.size(), 0, 0..oval_instance_buffer.size());
         }
+
+        //texture
+
+        if texture_bind_group.is_none() {
+            return;
+        }
+
+        render_pass.set_pipeline(&self.texture_render_pipeline);
+        render_pass.set_bind_group(0, &frame_bind_group, &[]);
+        render_pass.set_bind_group(1, texture_bind_group.as_ref().unwrap(), &[]);
+
+        render_pass.set_vertex_buffer(0, texture_vertex_buffer.slice());
+        render_pass.set_index_buffer(texture_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
+
+        render_pass.set_vertex_buffer(1, texture_instance_buffer.slice());
+
+        render_pass.draw_indexed(0..texture_indices_buffer.size(), 0, 0..texture_instance_buffer.size());
     }
 
     /// clears the current drawn [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval]
@@ -246,7 +294,7 @@ impl ShapeRenderer {
 
     /// resizes the depthBuffer should be called on every window resize
     pub fn resize(&mut self, device: &Device, config: &SurfaceConfiguration) -> &mut Self {
-        self.depth_texture = Texture::create_depth_texture(device, config, "depth_texture");
+        self.depth_texture = DepthBuffer::create_depth_texture(device, config, "depth_texture");
         self
     }
 
@@ -346,6 +394,38 @@ impl ShapeRenderer {
         instance_buffer_groups
     }
 
+    pub fn image(&mut self) -> &mut Imgage {
+        self.images.push(Imgage::default());
+        self.images.last_mut().unwrap()
+    }
+
+    fn generate_image_buffer(&self, device: &Device) -> InstanceBufferGroup {
+        let vertex_buffer = BufferCreator::vertex(device)
+            .label("Rect VertexBuffer")
+            .data(vec![
+                OwnVertex { position: [1.0, 1.0] },
+                OwnVertex { position: [-1.0, 1.0] },
+                OwnVertex { position: [-1.0, -1.0] },
+                OwnVertex { position: [1.0, -1.0] },
+            ]).build();
+
+        let indices_buffer = BufferCreator::indices(device)
+            .label("Rect IndicesBuffer")
+            .data(vec![0, 1, 2, 0, 2, 3])
+            .build();
+
+        let instances: Vec<_> = self.images.iter()
+            .map(|texture| texture.to_instance())
+            .collect();
+
+        let instances_buffer = BufferCreator::vertex(device)
+            .label("Rect InstanceBuffer")
+            .data(instances)
+            .build();
+
+        InstanceBufferGroup(vertex_buffer, indices_buffer, instances_buffer)
+    }
+
     pub fn add_texture_from_bytes(&mut self, bytes: &[u8], device: &Device, queue: &Queue) {
         let diffuse_image = image::load_from_memory(bytes).unwrap();
         let diffuse_rgba = diffuse_image.to_rgba8();
@@ -395,9 +475,8 @@ impl ShapeRenderer {
         );
 
         let diffuse_texture_view = diffuse_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let diffuse_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
 
-        self.textures.push((diffuse_texture_view, diffuse_sampler));
+        self.texture = Some(diffuse_texture_view);
     }
 }
 
