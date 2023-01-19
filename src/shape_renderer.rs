@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 use image::GenericImageView;
 
-use wgpu::{BindGroup, BindGroupLayout, Color, CommandEncoder, Device, include_wgsl, Queue, RenderPipeline, SamplerDescriptor, SurfaceConfiguration, TextureView};
+use wgpu::{BindGroup, BindGroupLayout, Color, CommandEncoder, Device, Queue, RenderPipeline, SamplerDescriptor, SurfaceConfiguration, TextureView};
 use wgpu::util::DeviceExt;
 use wgpu_noboiler::buffer::{BufferCreator, SimpleBuffer};
 use wgpu_noboiler::render_pass::RenderPassCreator;
@@ -15,7 +15,7 @@ use crate::instance::{Instance, TextureInstance};
 use crate::oval::Oval;
 use crate::rect::Rect;
 use crate::shapes::BasicShape;
-use crate::texture::Imgage;
+use crate::texture::Image;
 use crate::vertex::Vertex as OwnVertex;
 
 /// helps to draw basic [BasicShapes](BasicShape)
@@ -25,7 +25,7 @@ pub struct ShapeRenderer {
 
     recs: Vec<Rect>,
     ovals: Vec<Oval>,
-    images: Vec<Imgage>,
+    images: Vec<Image>,
 
     frame_group_layout: BindGroupLayout,
     frame_size: (f32, f32),
@@ -394,8 +394,8 @@ impl ShapeRenderer {
         instance_buffer_groups
     }
 
-    pub fn image(&mut self) -> &mut Imgage {
-        self.images.push(Imgage::default());
+    pub fn image(&mut self) -> &mut Image {
+        self.images.push(Image::default());
         self.images.last_mut().unwrap()
     }
 

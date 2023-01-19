@@ -1,13 +1,13 @@
 use crate::instance::TextureInstance;
 
-pub struct Imgage {
+pub struct Image {
     pub scale: (f32, f32),
     pub pos: (f32, f32),
     pub rotation: f32,
     pub layer: u16,
 }
 
-impl Imgage {
+impl Image {
     pub fn scale(&mut self, width: f32, height: f32) -> &mut Self {
         self.scale = (width, height);
         self
@@ -38,9 +38,9 @@ impl Imgage {
     }
 }
 
-impl Default for Imgage {
+impl Default for Image {
     fn default() -> Self {
-        Imgage {
+        Image {
             scale: (20.0, 20.0),
             pos: (0.0, 0.0),
             rotation: 0.0,

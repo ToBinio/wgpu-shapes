@@ -35,7 +35,8 @@ fn vs_main(
     var out: VertexOutput;
 
     out.tex_coords = model.position;
-    out.tex_coords.y = 1.0 - out.tex_coords.y;
+    out.tex_coords.y = 0.5 - out.tex_coords.y / 2.0;
+    out.tex_coords.x = 0.5 + out.tex_coords.x / 2.0;
 
     var xScale = instance.scale.x / 2.0;
     var yScale = instance.scale.y / 2.0;
