@@ -10,13 +10,13 @@ use wgpu_noboiler::render_pass::RenderPassCreator;
 use wgpu_noboiler::render_pipeline::RenderPipelineCreator;
 use wgpu_noboiler::vertex::Vertex;
 
-use crate::depth_buffer::DepthBuffer;
-use crate::instance::{Instance, TextureInstance};
-use crate::oval::Oval;
-use crate::rect::Rect;
-use crate::shapes::BasicShape;
-use crate::texture::Image;
-use crate::vertex::Vertex as OwnVertex;
+use crate::render::depth_buffer::DepthBuffer;
+use crate::render::instance::{Instance, TextureInstance};
+use crate::shape::oval::Oval;
+use crate::shape::rect::Rect;
+use crate::shape::shapes::BasicShape;
+use crate::render::vertex::Vertex as OwnVertex;
+use crate::shape::image::Image;
 
 /// helps to draw basic [BasicShapes](BasicShape)
 pub struct ShapeRenderer {
@@ -96,7 +96,7 @@ impl ShapeRenderer {
                 label: Some("texture_bind_group_layout"),
             });
 
-        let shape_render_pipeline = RenderPipelineCreator::from_shader_code(include_str!("../resources/shape_shader.wgsl"), device, config)
+        let shape_render_pipeline = RenderPipelineCreator::from_shader_code(include_str!("../../resources/shape_shader.wgsl"), device, config)
             .add_bind_group(&frame_size_group_layout)
             .add_vertex_buffer(OwnVertex::descriptor())
             .add_vertex_buffer(Instance::descriptor())
@@ -109,7 +109,7 @@ impl ShapeRenderer {
             })
             .build();
 
-        let texture_render_pipeline = RenderPipelineCreator::from_shader_code(include_str!("../resources/texture_shader.wgsl"), device, config)
+        let texture_render_pipeline = RenderPipelineCreator::from_shader_code(include_str!("../../resources/texture_shader.wgsl"), device, config)
             .add_bind_group(&frame_size_group_layout)
             .add_bind_group(&texture_bind_group_layout)
             .add_vertex_buffer(OwnVertex::descriptor())

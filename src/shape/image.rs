@@ -1,4 +1,4 @@
-use crate::instance::TextureInstance;
+use crate::render::instance::TextureInstance;
 
 pub struct Image {
     pub scale: (f32, f32),

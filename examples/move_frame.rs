@@ -5,8 +5,8 @@ use wgpu_noboiler::app::{AppCreator, AppData};
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, MouseButton, WindowEvent};
 
-use wgpu_shapes::shape_renderer::ShapeRenderer;
-use wgpu_shapes::shapes::BasicShape;
+use wgpu_shapes::render::shape_renderer::ShapeRenderer;
+use wgpu_shapes::shape::shapes::BasicShape;
 
 struct State {
     shape_renderer: Option<ShapeRenderer>,
