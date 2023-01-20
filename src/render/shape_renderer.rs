@@ -1,7 +1,8 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::f32::consts::PI;
-use image::GenericImageView;
+use image::{GenericImage, GenericImageView, ImageBuffer};
+use rectangle_pack::pack_rects;
 
 use wgpu::{BindGroup, BindGroupLayout, Color, CommandEncoder, Device, Queue, RenderPipeline, SamplerDescriptor, SurfaceConfiguration, TextureView};
 use wgpu::util::DeviceExt;
@@ -428,9 +429,14 @@ impl ShapeRenderer {
 
     pub fn add_texture_from_bytes(&mut self, bytes: &[u8], device: &Device, queue: &Queue) {
         let diffuse_image = image::load_from_memory(bytes).unwrap();
-        let diffuse_rgba = diffuse_image.to_rgba8();
 
-        let dimensions = diffuse_image.dimensions();
+        pack_rects()
+
+        let mut buffer = ImageBuffer::new(4096, 4096);
+
+        buffer.copy_from(&diffuse_image, 0, 0).expect("TODO: panic message");
+
+        let dimensions = buffer.dimensions();
 
         let texture_size = wgpu::Extent3d {
             width: dimensions.0,
@@ -464,7 +470,7 @@ impl ShapeRenderer {
                 aspect: wgpu::TextureAspect::All,
             },
             // The actual pixel data
-            &diffuse_rgba,
+            &buffer,
             // The layout of the texture
             wgpu::ImageDataLayout {
                 offset: 0,
