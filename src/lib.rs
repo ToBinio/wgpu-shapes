@@ -2,6 +2,5 @@
 //!
 //! best used with [wgpu_noboiler](https://crates.io/crates/wgpu-noboiler)
 
-
-pub mod shape;
 pub mod render;
+pub mod shape;

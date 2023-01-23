@@ -1,4 +1,4 @@
+mod depth_buffer;
+pub mod instance;
 pub mod shape_renderer;
 mod vertex;
-pub mod instance;
-mod depth_buffer;

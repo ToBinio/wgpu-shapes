@@ -1,5 +1,5 @@
-use wgpu::Color;
 use crate::render::instance::Instance;
+use wgpu::Color;
 
 use crate::shape::shapes::{BasicShape, BasicShapeData};
 
