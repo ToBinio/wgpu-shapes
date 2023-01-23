@@ -1,8 +1,8 @@
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::f32::consts::PI;
-use image::{GenericImage, GenericImageView, ImageBuffer};
-use rectangle_pack::pack_rects;
+use image::{DynamicImage, GenericImage, GenericImageView, ImageBuffer};
+use rectangle_pack::{contains_smallest_box, GroupedRectsToPlace, pack_rects, RectanglePackError, RectanglePackOk, RectToInsert, TargetBin, volume_heuristic};
 
 use wgpu::{BindGroup, BindGroupLayout, Color, CommandEncoder, Device, Queue, RenderPipeline, SamplerDescriptor, SurfaceConfiguration, TextureView};
 use wgpu::util::DeviceExt;
@@ -38,6 +38,8 @@ pub struct ShapeRenderer {
 
     texture_group_layout: BindGroupLayout,
     texture: Option<TextureView>,
+    texture_size: u32,
+    textures: Vec<DynamicImage>,
 }
 
 impl ShapeRenderer {
@@ -142,6 +144,8 @@ impl ShapeRenderer {
 
             texture_group_layout: texture_bind_group_layout,
             texture: None,
+            texture_size: 512,
+            textures: vec![],
         }
     }
 
@@ -427,14 +431,52 @@ impl ShapeRenderer {
         InstanceBufferGroup(vertex_buffer, indices_buffer, instances_buffer)
     }
 
-    pub fn add_texture_from_bytes(&mut self, bytes: &[u8], device: &Device, queue: &Queue) {
-        let diffuse_image = image::load_from_memory(bytes).unwrap();
+    pub fn add_texture_from_bytes(&mut self, bytes: &[u8], device: &Device, queue: &Queue) -> &mut Self {
+        self.textures.push(image::load_from_memory(bytes).unwrap());
 
-        pack_rects()
+        self.upload_textures(device, queue);
 
-        let mut buffer = ImageBuffer::new(4096, 4096);
+        self
+    }
 
-        buffer.copy_from(&diffuse_image, 0, 0).expect("TODO: panic message");
+    fn upload_textures(&mut self, device: &Device, queue: &Queue) {
+        let mut rects_to_place: GroupedRectsToPlace<usize, usize> = GroupedRectsToPlace::new();
+
+        for (index, image) in self.textures.iter().enumerate() {
+            let dimensions = image.dimensions();
+
+            rects_to_place.push_rect(
+                index,
+                None,
+                RectToInsert::new(dimensions.0, dimensions.1, 1),
+            );
+        }
+
+        let mut target_bins = BTreeMap::new();
+        target_bins.insert(0, TargetBin::new(self.texture_size, self.texture_size, 1));
+
+        let rectangle_placements = pack_rects(
+            &rects_to_place,
+            &mut target_bins,
+            &volume_heuristic,
+            &contains_smallest_box,
+        );
+
+        let rectangle_placements = match rectangle_placements {
+            Ok(rectangle_pack) => { rectangle_pack }
+            Err(_) => {
+                self.texture_size *= 2;
+                self.upload_textures(device, queue);
+
+                return;
+            }
+        };
+
+        let mut buffer = ImageBuffer::new(self.texture_size, self.texture_size);
+
+        for (index, (_, location)) in rectangle_placements.packed_locations() {
+            buffer.copy_from(self.textures.get(*index).unwrap(), location.x(), location.y()).expect("TODO: panic message");
+        }
 
         let dimensions = buffer.dimensions();
 

@@ -71,7 +71,9 @@ fn render(data: &AppData, state: &mut State, mut encoder: CommandEncoder, textur
 
 fn init(data: &AppData, state: &mut State, _: &mut Vec<RenderPipeline>) {
     state.shape_renderer = Some(ShapeRenderer::new(&data.device, &data.config));
-    state.shape_renderer.as_mut().unwrap().add_texture_from_bytes(include_bytes!("img.png"), &data.device, &data.queue);
+    state.shape_renderer.as_mut().unwrap().add_texture_from_bytes(include_bytes!("img.png"), &data.device, &data.queue)
+        .add_texture_from_bytes(include_bytes!("img2.png"), &data.device, &data.queue)
+        .add_texture_from_bytes(include_bytes!("img.png"), &data.device, &data.queue);
 }
 
 fn resize(data: &AppData, state: &mut State, size: &PhysicalSize<u32>) {
