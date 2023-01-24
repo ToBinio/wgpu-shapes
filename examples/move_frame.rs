@@ -23,13 +23,10 @@ fn main() {
     })
     .render(render)
     .init(init)
-    .update(update)
     .resize(resize)
     .window_event(event)
     .run();
 }
-
-fn update(_data: &AppData, _state: &mut State) {}
 
 fn render(
     data: &AppData,
@@ -102,7 +99,7 @@ fn init(data: &AppData, state: &mut State, _: &mut Vec<RenderPipeline>) {
         .as_mut()
         .unwrap()
         .add_textures_from_bytes(
-            &[include_bytes!("img.png"), include_bytes!("img2.png")],
+            &vec![include_bytes!("img.png"), include_bytes!("img2.png")],
             &data.device,
             &data.queue,
         );

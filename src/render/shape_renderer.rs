@@ -516,7 +516,7 @@ impl ShapeRenderer {
 
     pub fn add_textures_from_bytes(
         &mut self,
-        bytes: &[&[u8]],
+        bytes: &Vec<&[u8]>,
         device: &Device,
         queue: &Queue,
     ) -> &mut Self {

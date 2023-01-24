@@ -1,12 +1,12 @@
 use crate::render::instance::TextureInstance;
 
 pub struct Image {
-    pub scale: (f32, f32),
-    pub pos: (f32, f32),
-    pub rotation: f32,
-    pub layer: u16,
-    pub texture_pos: (f32, f32),
-    pub texture_scale: (f32, f32),
+    pub(crate) scale: (f32, f32),
+    pub(crate) pos: (f32, f32),
+    pub(crate) rotation: f32,
+    pub(crate) layer: u16,
+    pub(crate) texture_pos: (f32, f32),
+    pub(crate) texture_scale: (f32, f32),
 }
 
 impl Image {
