@@ -5,6 +5,8 @@ pub struct Image {
     pub pos: (f32, f32),
     pub rotation: f32,
     pub layer: u16,
+    pub texture_pos: (f32, f32),
+    pub texture_scale: (f32, f32),
 }
 
 impl Image {
@@ -34,6 +36,8 @@ impl Image {
             scale: [self.scale.0, self.scale.1],
             rotation: self.rotation,
             layer: self.layer as u32,
+            texture_position: [self.texture_pos.0, self.texture_pos.1],
+            texture_scale: [self.texture_scale.0, self.texture_scale.1],
         }
     }
 }
@@ -45,6 +49,8 @@ impl Default for Image {
             pos: (0.0, 0.0),
             rotation: 0.0,
             layer: 0,
+            texture_pos: (0.0, 0.0),
+            texture_scale: (1.0, 1.0),
         }
     }
 }

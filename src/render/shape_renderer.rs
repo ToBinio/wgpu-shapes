@@ -46,6 +46,7 @@ pub struct ShapeRenderer {
     texture: Option<TextureView>,
     texture_size: u32,
     textures: Vec<DynamicImage>,
+    textures_cords: Vec<((f32, f32), (f32, f32))>,
 }
 
 impl ShapeRenderer {
@@ -161,6 +162,7 @@ impl ShapeRenderer {
             texture: None,
             texture_size: 512,
             textures: vec![],
+            textures_cords: vec![],
         }
     }
 
@@ -445,8 +447,19 @@ impl ShapeRenderer {
         instance_buffer_groups
     }
 
-    pub fn image(&mut self) -> &mut Image {
-        self.images.push(Image::default());
+    pub fn image(&mut self, texture_index: usize) -> &mut Image {
+        let mut image = Image::default();
+        match self.textures_cords.get(texture_index) {
+            None => {
+                println!("No texture with the id: {} could be found", texture_index);
+            }
+            Some(cords) => {
+                image.texture_pos = cords.0.clone();
+                image.texture_scale = cords.1.clone();
+            }
+        };
+
+        self.images.push(image);
         self.images.last_mut().unwrap()
     }
 
@@ -501,6 +514,21 @@ impl ShapeRenderer {
         self
     }
 
+    pub fn add_textures_from_bytes(
+        &mut self,
+        bytes: &[&[u8]],
+        device: &Device,
+        queue: &Queue,
+    ) -> &mut Self {
+        for bytes in bytes {
+            self.textures.push(image::load_from_memory(bytes).unwrap());
+        }
+
+        self.upload_textures(device, queue);
+
+        self
+    }
+
     fn upload_textures(&mut self, device: &Device, queue: &Queue) {
         let mut rects_to_place: GroupedRectsToPlace<usize, usize> = GroupedRectsToPlace::new();
 
@@ -534,6 +562,7 @@ impl ShapeRenderer {
             }
         };
 
+        self.textures_cords.clear();
         let mut buffer = ImageBuffer::new(self.texture_size, self.texture_size);
 
         for (index, (_, location)) in rectangle_placements.packed_locations() {
@@ -544,6 +573,17 @@ impl ShapeRenderer {
                     location.y(),
                 )
                 .expect("TODO: panic message");
+
+            self.textures_cords.push((
+                (
+                    location.x() as f32 / self.texture_size as f32,
+                    location.y() as f32 / self.texture_size as f32,
+                ),
+                (
+                    location.width() as f32 / self.texture_size as f32,
+                    location.height() as f32 / self.texture_size as f32,
+                ),
+            ))
         }
 
         let dimensions = buffer.dimensions();

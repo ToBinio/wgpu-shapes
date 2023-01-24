@@ -20,6 +20,8 @@ struct InstanceInput{
     @location(2) scale: vec2<f32>,
     @location(3) rotation: f32,
     @location(4) layer: u32,
+    @location(5) texture_position: vec2<f32>,
+    @location(6) texture_scale: vec2<f32>,
 }
 
 struct VertexOutput {
@@ -34,9 +36,8 @@ fn vs_main(
 ) -> VertexOutput {
     var out: VertexOutput;
 
-    out.tex_coords = model.position;
-    out.tex_coords.y = 0.5 - out.tex_coords.y / 2.0;
-    out.tex_coords.x = 0.5 + out.tex_coords.x / 2.0;
+    out.tex_coords.x = instance.texture_position.x + ((model.position.x + 1.0) / 2.0) * instance.texture_scale.x;
+    out.tex_coords.y = instance.texture_position.y + (1.0 - (model.position.y + 1.0) / 2.0) * instance.texture_scale.y;
 
     var xScale = instance.scale.x / 2.0;
     var yScale = instance.scale.y / 2.0;

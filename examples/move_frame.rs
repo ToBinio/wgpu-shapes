@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use std::iter::once;
 
 use wgpu::{CommandEncoder, RenderPipeline, TextureView};
@@ -70,7 +71,24 @@ fn render(
         .color(1.0, 0.0, 1.0)
         .layer(100);
 
-    shape_renderer.image().scale(200.0, 200.0).layer(105);
+    shape_renderer
+        .image(0)
+        .scale(200.0, 200.0)
+        .layer(105)
+        .rotation(PI / 4.0);
+
+    shape_renderer
+        .image(1)
+        .pos(300.0, 0.0)
+        .scale(200.0, 200.0)
+        .layer(105);
+
+    shape_renderer
+        .image(0)
+        .rotation(-PI / 2.0)
+        .pos(-300.0, 0.0)
+        .scale(200.0, 200.0)
+        .layer(110);
 
     shape_renderer.render(&mut encoder, &texture_view, &data.device);
 
@@ -83,9 +101,11 @@ fn init(data: &AppData, state: &mut State, _: &mut Vec<RenderPipeline>) {
         .shape_renderer
         .as_mut()
         .unwrap()
-        .add_texture_from_bytes(include_bytes!("img.png"), &data.device, &data.queue)
-        .add_texture_from_bytes(include_bytes!("img2.png"), &data.device, &data.queue)
-        .add_texture_from_bytes(include_bytes!("img.png"), &data.device, &data.queue);
+        .add_textures_from_bytes(
+            &[include_bytes!("img.png"), include_bytes!("img2.png")],
+            &data.device,
+            &data.queue,
+        );
 }
 
 fn resize(data: &AppData, state: &mut State, size: &PhysicalSize<u32>) {
