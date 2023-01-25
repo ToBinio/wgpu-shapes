@@ -47,6 +47,9 @@ pub struct ShapeRenderer {
     texture_size: u32,
     textures: Vec<DynamicImage>,
     textures_cords: Vec<((f32, f32), (f32, f32))>,
+
+    rect_vertex_buffer: SimpleBuffer,
+    rect_indices_buffer: SimpleBuffer,
 }
 
 impl ShapeRenderer {
@@ -142,6 +145,29 @@ impl ShapeRenderer {
         })
         .build();
 
+        let rect_vertex_buffer = BufferCreator::vertex(device)
+            .label("Rect VertexBuffer")
+            .data(vec![
+                OwnVertex {
+                    position: [1.0, 1.0],
+                },
+                OwnVertex {
+                    position: [-1.0, 1.0],
+                },
+                OwnVertex {
+                    position: [-1.0, -1.0],
+                },
+                OwnVertex {
+                    position: [1.0, -1.0],
+                },
+            ])
+            .build();
+
+        let rect_indices_buffer = BufferCreator::indices(device)
+            .label("Rect IndicesBuffer")
+            .data(vec![0, 1, 2, 0, 2, 3])
+            .build();
+
         ShapeRenderer {
             shape_render_pipeline,
             texture_render_pipeline,
@@ -163,6 +189,8 @@ impl ShapeRenderer {
             texture_size: 512,
             textures: vec![],
             textures_cords: vec![],
+            rect_vertex_buffer,
+            rect_indices_buffer,
         }
     }
 
@@ -223,15 +251,9 @@ impl ShapeRenderer {
         texture_view: &TextureView,
         device: &Device,
     ) {
-        let InstanceBufferGroup(rect_vertex_buffer, rect_indices_buffer, rect_instance_buffer) =
-            self.generate_rect_buffer(device);
+        let rect_instance_buffer = self.generate_rect_buffer(device);
         let oval_buffers = self.generate_oval_buffer(device);
-
-        let InstanceBufferGroup(
-            texture_vertex_buffer,
-            texture_indices_buffer,
-            texture_instance_buffer,
-        ) = self.generate_image_buffer(device);
+        let image_instance_buffer = self.generate_image_buffer(device);
 
         let frame_bind_group = self.frame_bind_group(device);
         let texture_bind_group = self.texture_bind_group(device);
@@ -252,13 +274,13 @@ impl ShapeRenderer {
         render_pass.set_bind_group(0, &frame_bind_group, &[]);
 
         //rects
-        render_pass.set_vertex_buffer(0, rect_vertex_buffer.slice());
-        render_pass.set_index_buffer(rect_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
+        render_pass.set_vertex_buffer(0, self.rect_vertex_buffer.slice());
+        render_pass.set_index_buffer(self.rect_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
 
         render_pass.set_vertex_buffer(1, rect_instance_buffer.slice());
 
         render_pass.draw_indexed(
-            0..rect_indices_buffer.size(),
+            0..self.rect_indices_buffer.size(),
             0,
             0..rect_instance_buffer.size(),
         );
@@ -290,15 +312,15 @@ impl ShapeRenderer {
         render_pass.set_bind_group(0, &frame_bind_group, &[]);
         render_pass.set_bind_group(1, texture_bind_group.as_ref().unwrap(), &[]);
 
-        render_pass.set_vertex_buffer(0, texture_vertex_buffer.slice());
-        render_pass.set_index_buffer(texture_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
+        render_pass.set_vertex_buffer(0, self.rect_vertex_buffer.slice());
+        render_pass.set_index_buffer(self.rect_indices_buffer.slice(), wgpu::IndexFormat::Uint32);
 
-        render_pass.set_vertex_buffer(1, texture_instance_buffer.slice());
+        render_pass.set_vertex_buffer(1, image_instance_buffer.slice());
 
         render_pass.draw_indexed(
-            0..texture_indices_buffer.size(),
+            0..self.rect_indices_buffer.size(),
             0,
-            0..texture_instance_buffer.size(),
+            0..image_instance_buffer.size(),
         );
     }
 
@@ -352,30 +374,7 @@ impl ShapeRenderer {
         self.recs.last_mut().unwrap()
     }
 
-    fn generate_rect_buffer(&self, device: &Device) -> InstanceBufferGroup {
-        let vertex_buffer = BufferCreator::vertex(device)
-            .label("Rect VertexBuffer")
-            .data(vec![
-                OwnVertex {
-                    position: [1.0, 1.0],
-                },
-                OwnVertex {
-                    position: [-1.0, 1.0],
-                },
-                OwnVertex {
-                    position: [-1.0, -1.0],
-                },
-                OwnVertex {
-                    position: [1.0, -1.0],
-                },
-            ])
-            .build();
-
-        let indices_buffer = BufferCreator::indices(device)
-            .label("Rect IndicesBuffer")
-            .data(vec![0, 1, 2, 0, 2, 3])
-            .build();
-
+    fn generate_rect_buffer(&self, device: &Device) -> SimpleBuffer {
         let instances: Vec<_> = self.recs.iter().map(|rect| rect.to_instance()).collect();
 
         let instances_buffer = BufferCreator::vertex(device)
@@ -383,7 +382,7 @@ impl ShapeRenderer {
             .data(instances)
             .build();
 
-        InstanceBufferGroup(vertex_buffer, indices_buffer, instances_buffer)
+        instances_buffer
     }
 
     /// renders [Oval] and returns a Ref to it
@@ -464,30 +463,7 @@ impl ShapeRenderer {
         self.images.last_mut().unwrap()
     }
 
-    fn generate_image_buffer(&self, device: &Device) -> InstanceBufferGroup {
-        let vertex_buffer = BufferCreator::vertex(device)
-            .label("Rect VertexBuffer")
-            .data(vec![
-                OwnVertex {
-                    position: [1.0, 1.0],
-                },
-                OwnVertex {
-                    position: [-1.0, 1.0],
-                },
-                OwnVertex {
-                    position: [-1.0, -1.0],
-                },
-                OwnVertex {
-                    position: [1.0, -1.0],
-                },
-            ])
-            .build();
-
-        let indices_buffer = BufferCreator::indices(device)
-            .label("Rect IndicesBuffer")
-            .data(vec![0, 1, 2, 0, 2, 3])
-            .build();
-
+    fn generate_image_buffer(&self, device: &Device) -> SimpleBuffer {
         let instances: Vec<_> = self
             .images
             .iter()
@@ -499,7 +475,7 @@ impl ShapeRenderer {
             .data(instances)
             .build();
 
-        InstanceBufferGroup(vertex_buffer, indices_buffer, instances_buffer)
+        instances_buffer
     }
 
     pub fn add_texture_from_bytes(
