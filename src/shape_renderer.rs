@@ -7,6 +7,7 @@ use std::collections::hash_map::Entry;
 use std::collections::{BTreeMap, HashMap};
 use std::f32::consts::PI;
 
+use crate::render::depth_buffer::DepthBuffer;
 use wgpu::util::DeviceExt;
 use wgpu::{
     BindGroup, BindGroupLayout, Color, CommandEncoder, Device, Queue, RenderPipeline,
@@ -17,7 +18,6 @@ use wgpu_noboiler::render_pass::RenderPassCreator;
 use wgpu_noboiler::render_pipeline::RenderPipelineCreator;
 use wgpu_noboiler::vertex::Vertex;
 
-use crate::render::depth_buffer::DepthBuffer;
 use crate::render::instance::{Instance, TextureInstance};
 use crate::render::vertex::Vertex as OwnVertex;
 use crate::shape::image::Image;
@@ -111,7 +111,7 @@ impl ShapeRenderer {
             });
 
         let shape_render_pipeline = RenderPipelineCreator::from_shader_code(
-            include_str!("../../resources/shape_shader.wgsl"),
+            include_str!("../resources/shape_shader.wgsl"),
             device,
             config,
         )
@@ -128,7 +128,7 @@ impl ShapeRenderer {
         .build();
 
         let texture_render_pipeline = RenderPipelineCreator::from_shader_code(
-            include_str!("../../resources/texture_shader.wgsl"),
+            include_str!("../resources/texture_shader.wgsl"),
             device,
             config,
         )
@@ -455,8 +455,8 @@ impl ShapeRenderer {
                 println!("No texture with the id: {} could be found", texture_index);
             }
             Some(cords) => {
-                image.texture_pos = cords.0.clone();
-                image.texture_scale = cords.1.clone();
+                image.texture_pos = cords.0;
+                image.texture_scale = cords.1;
             }
         };
 

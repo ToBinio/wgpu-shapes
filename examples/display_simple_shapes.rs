@@ -4,8 +4,8 @@ use std::iter::once;
 use wgpu::{Color, CommandEncoder, RenderPipeline, TextureView};
 use wgpu_noboiler::app::{AppCreator, AppData};
 
-use wgpu_shapes::render::shape_renderer::ShapeRenderer;
 use wgpu_shapes::shape::shapes::BasicShape;
+use wgpu_shapes::shape_renderer::ShapeRenderer;
 
 struct State {
     shape_renderer: Option<ShapeRenderer>,
