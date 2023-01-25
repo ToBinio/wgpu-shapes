@@ -10,21 +10,27 @@ pub struct Image {
 }
 
 impl Image {
+    /// size of the shape
     pub fn scale(&mut self, width: f32, height: f32) -> &mut Self {
         self.scale = (width, height);
         self
     }
 
+    /// location of the shape in the frame
     pub fn pos(&mut self, x: f32, y: f32) -> &mut Self {
         self.pos = (x, y);
         self
     }
 
+    /// rotation of the shape in radians
     pub fn rotation(&mut self, rotation: f32) -> &mut Self {
         self.rotation = rotation;
         self
     }
 
+    /// render layer of the shape
+    ///
+    /// higher layer -> foreground
     pub fn layer(&mut self, layer: u16) -> &mut Self {
         self.layer = layer;
         self

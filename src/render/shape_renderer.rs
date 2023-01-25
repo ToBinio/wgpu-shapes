@@ -447,6 +447,7 @@ impl ShapeRenderer {
         instance_buffer_groups
     }
 
+    /// renders [Image] and returns a Ref to it
     pub fn image(&mut self, texture_index: usize) -> &mut Image {
         let mut image = Image::default();
         match self.textures_cords.get(texture_index) {
@@ -514,6 +515,7 @@ impl ShapeRenderer {
         self
     }
 
+    /// adds a texture to the usable texturePool
     pub fn add_textures_from_bytes(
         &mut self,
         bytes: &Vec<&[u8]>,
@@ -529,6 +531,7 @@ impl ShapeRenderer {
         self
     }
 
+    /// adds multiple textures to the usable texturePool
     fn upload_textures(&mut self, device: &Device, queue: &Queue) {
         let mut rects_to_place: GroupedRectsToPlace<usize, usize> = GroupedRectsToPlace::new();
 

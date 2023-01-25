@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 wgpu = "0.14.2"
-bytemuck = { version = "1.12.3", features = [ "derive" ] }
+bytemuck = { version = "1.13.0", features = [ "derive" ] }
 wgpu-noboiler = "0.1.5"
 image = "0.24.5"
 rectangle-pack = "0.4.2"
