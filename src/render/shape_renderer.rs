@@ -328,6 +328,7 @@ impl ShapeRenderer {
     pub fn clear(&mut self) {
         self.recs.clear();
         self.ovals.clear();
+        self.images.clear();
     }
 
     /// sets the current [frame_size](ShapeRenderer::frame_size)
