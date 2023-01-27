@@ -11,9 +11,9 @@ repository = "https://github.com/ToBinio/wgpu-shapes"
 keywords = ["graphics", "wgpu"]
 
 [dependencies]
-wgpu = "0.14.2"
-bytemuck = { version = "1.13.0", features = ["derive"] }
-wgpu-noboiler = "0.1.6"
+wgpu = "0.15.0"
+bytemuck = { version = "1.13.0", features = [ "derive" ] }
+wgpu-noboiler = "0.2.0"
 image = "0.24.5"
 rectangle-pack = "0.4.2"
 

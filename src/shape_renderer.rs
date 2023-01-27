@@ -1,13 +1,12 @@
+use std::collections::hash_map::Entry;
+use std::collections::{BTreeMap, HashMap};
+use std::f32::consts::PI;
+
 use image::{DynamicImage, GenericImage, GenericImageView, ImageBuffer};
 use rectangle_pack::{
     contains_smallest_box, pack_rects, volume_heuristic, GroupedRectsToPlace, RectToInsert,
     TargetBin,
 };
-use std::collections::hash_map::Entry;
-use std::collections::{BTreeMap, HashMap};
-use std::f32::consts::PI;
-
-use crate::render::depth_buffer::DepthBuffer;
 use wgpu::util::DeviceExt;
 use wgpu::{
     BindGroup, BindGroupLayout, Color, CommandEncoder, Device, Queue, RenderPipeline,
@@ -18,6 +17,7 @@ use wgpu_noboiler::render_pass::RenderPassCreator;
 use wgpu_noboiler::render_pipeline::RenderPipelineCreator;
 use wgpu_noboiler::vertex::Vertex;
 
+use crate::render::depth_buffer::DepthBuffer;
 use crate::render::instance::{Instance, TextureInstance};
 use crate::render::vertex::Vertex as OwnVertex;
 use crate::shape::image::Image;
@@ -582,11 +582,12 @@ impl ShapeRenderer {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             // Most images are stored using sRGB so we need to reflect that here.
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            format: wgpu::TextureFormat::Rgba8Unorm,
             // TEXTURE_BINDING tells wgpu that we want to use this texture in shaders
             // COPY_DST means that we want to copy data to this texture
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             label: Some("diffuse_texture"),
+            view_formats: &[],
         });
 
         queue.write_texture(

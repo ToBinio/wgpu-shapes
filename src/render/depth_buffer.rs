@@ -1,9 +1,11 @@
+use wgpu::TextureFormat;
+
 pub(crate) struct DepthBuffer {
     pub view: wgpu::TextureView,
 }
 
 impl DepthBuffer {
-    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+    pub const DEPTH_FORMAT: TextureFormat = TextureFormat::Depth32Float;
 
     pub fn create_depth_texture(
         device: &wgpu::Device,
@@ -23,6 +25,7 @@ impl DepthBuffer {
             dimension: wgpu::TextureDimension::D2,
             format: Self::DEPTH_FORMAT,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[TextureFormat::Depth32Float],
         };
         let texture = device.create_texture(&desc);
 

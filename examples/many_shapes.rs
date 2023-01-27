@@ -4,6 +4,7 @@ use wgpu::{CommandEncoder, PresentMode, RenderPipeline, TextureView};
 use wgpu_noboiler::app::{AppCreator, AppData};
 use winit::dpi::PhysicalSize;
 
+use wgpu_shapes::shape::shapes::BasicShape;
 use wgpu_shapes::shape_renderer::ShapeRenderer;
 
 struct State {
@@ -41,10 +42,10 @@ fn render(
 
     shape_renderer.clear();
 
-    for x in -200..200 {
-        for y in -200..200 {
+    for x in -400..400 {
+        for y in -400..400 {
             shape_renderer
-                .image(0)
+                .oval()
                 .pos((x * 2) as f32, (y * 2) as f32)
                 .scale(1.0, 1.0);
         }
