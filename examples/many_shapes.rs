@@ -1,4 +1,3 @@
-use std::f32::consts::PI;
 use std::iter::once;
 
 use wgpu::{CommandEncoder, PresentMode, RenderPipeline, TextureView};
