@@ -244,7 +244,7 @@ impl ShapeRenderer {
         }))
     }
 
-    /// renders the current [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval]
+    /// renders the current [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval], ...
     pub fn render<'a, 'b: 'a>(
         &'b self,
         encoder: &mut CommandEncoder,
@@ -324,7 +324,7 @@ impl ShapeRenderer {
         );
     }
 
-    /// clears the current drawn [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval]
+    /// clears the current drawn [BasicShapes](BasicShape) which can be added with [ShapeRenderer::rect], [ShapeRenderer::oval], ...
     pub fn clear(&mut self) {
         self.recs.clear();
         self.ovals.clear();
