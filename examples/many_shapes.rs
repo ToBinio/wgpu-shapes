@@ -1,6 +1,7 @@
 use std::iter::once;
+use rand::{Rng, thread_rng};
 
-use wgpu::{CommandEncoder, PresentMode, RenderPipeline, TextureView};
+use wgpu::{CommandEncoder, PowerPreference, PresentMode, RenderPipeline, TextureView};
 use wgpu_noboiler::app::{AppCreator, AppData};
 use winit::dpi::PhysicalSize;
 
@@ -29,6 +30,7 @@ fn main() {
         }
     })
     .present_mode(PresentMode::Immediate)
+    .power_preference(PowerPreference::HighPerformance)
     .run();
 }
 
@@ -46,8 +48,8 @@ fn render(
         for y in -400..400 {
             shape_renderer
                 .oval()
-                .pos((x * 2) as f32, (y * 2) as f32)
-                .scale(1.0, 1.0);
+                .pos((x * 4) as f32, (y * 4) as f32)
+                .scale(2.0, 2.0);
         }
     }
 
@@ -57,6 +59,7 @@ fn render(
 }
 
 fn init(data: &AppData, state: &mut State, _: &mut Vec<RenderPipeline>) {
+
     state.shape_renderer = Some(ShapeRenderer::new(&data.device, &data.config));
     state
         .shape_renderer

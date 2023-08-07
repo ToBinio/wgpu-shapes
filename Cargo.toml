@@ -1,6 +1,6 @@
 [package]
 name = "wgpu-shapes"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["ToBinio"]
 edition = "2021"
 license = "MIT"
@@ -18,4 +18,5 @@ image = "0.24.5"
 rectangle-pack = "0.4.2"
 
 [dev-dependencies]
+rand = "0.8.5"
 winit = "0.27.5"
